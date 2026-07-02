@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">BLMovie</string>
+    <string name="app_name">暴龙影视</string>
+    <string name="splash_text">发现你喜欢的电影和动漫</string>
+    <string name="tab_home">推荐</string>
+    <string name="tab_short_video">短视频</string>
+    <string name="tab_category">分类</string>
+    <string name="tab_article">文章</string>
+    <string name="tab_mine">我的</string>
+    <string name="search_tip">搜索</string>
 </resources>
