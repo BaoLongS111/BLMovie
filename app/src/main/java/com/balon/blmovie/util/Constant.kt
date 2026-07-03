@@ -18,4 +18,5 @@ object Constant {
             durationMillis = LOGO_SHARED_ANIMATION_DURATION
         )
     }
+
 }

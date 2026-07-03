@@ -33,6 +33,12 @@ okhttp = "5.4.0"
 retrofit = "3.0.0"
 serializationJson = "1.11.0"
 
+# 日志打印 不用手动传TAG
+timber = "5.0.1"
+
+# 图片框架
+coil = "3.5.0"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -83,6 +89,13 @@ retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:co
 # Kotlinx Serialization JSON
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationJson" }
 # end region
+
+# 日志打印
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+
+# 图片框架
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -117,4 +117,14 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     // end region
 
+    // 日志打印
+    implementation(libs.timber)
+
+    // 指示器
+    implementation("com.tbuonomo:dotsindicator:5.1.1")
+
+    // Coil 图片加载
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
 }

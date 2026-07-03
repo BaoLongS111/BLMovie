@@ -6,9 +6,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -27,27 +31,42 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.balon.blmovie.R
 import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.design.theme.SpaceExtraMedium
+import com.balon.blmovie.core.design.theme.SpaceMedium
 import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.design.theme.SpaceSmallWidth
 import com.balon.blmovie.util.Constant
 import com.quick.app.core.extension.clickableNoRipple
+import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
+import com.tbuonomo.viewpagerdotsindicator.compose.model.DotGraphic
+import com.tbuonomo.viewpagerdotsindicator.compose.type.ShiftIndicatorType
 
 @Composable
 fun HomeRoute(
-    sharedTransitionScope: SharedTransitionScope?=null,
-    animatedContentScope: AnimatedContentScope?=null
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedContentScope: AnimatedContentScope? = null,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     HomeScreen(
+        uiState = uiState,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope
     )
@@ -56,6 +75,7 @@ fun HomeRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    uiState: HomeUiState? = null,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null
 ) {
@@ -76,12 +96,81 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "HomePageHomePageHomePageHomePageHomePageHomePageHomePageHomePage")
+            // 轮播图
+            Banners(
+                uiState = uiState
+            )
         }
 
     }
+}
+
+@Composable
+fun Banners(
+    uiState: HomeUiState? = null,
+    modifier: Modifier = Modifier
+) {
+    val banners = uiState!!.banners
+    val pageState = rememberPagerState { banners.size }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(SpaceSmall)
+            .aspectRatio(16f / 9f)
+            .clip(MaterialTheme.shapes.medium)
+    ) {
+        HorizontalPager(
+            state = pageState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            val item = banners[page]
+            Box() {
+                AsyncImage(
+                    model = item.pic,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = painterResource(R.drawable.placeholder)
+                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = SpaceMedium, bottom = SpaceMedium),
+                ) {
+                    Text(
+                        text = item.name.toString(),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color.White
+                        )
+                    )
+                    Text(
+                        text = item.note.toString(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White
+                        )
+                    )
+                }
+            }
+
+        }
+        DotsIndicator(
+            dotCount = banners.size,
+            type = ShiftIndicatorType(
+                dotsGraphic = DotGraphic(
+                    size = SpaceSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            ),
+            pagerState = pageState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = SpaceSmall)
+        )
+
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

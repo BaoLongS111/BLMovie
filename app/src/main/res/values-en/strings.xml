@@ -8,5 +8,7 @@
     <string name="tab_article">Article</string>
     <string name="tab_mine">Mine</string>
     <string name="search_tip">Search</string>
-
+    <string name="unknown_error">Unknown Error</string>
+    <string name="error_network_not_connect">Your network seems to be down</string>
+    <string name="error_loading">Request data failed, for details please check the error log, %1$s</string>
 </resources>

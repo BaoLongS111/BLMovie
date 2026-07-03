@@ -7,4 +7,7 @@
     <string name="tab_article">文章</string>
     <string name="tab_mine">我的</string>
     <string name="search_tip">搜索</string>
+    <string name="unknown_error">未知错误</string>
+    <string name="error_network_not_connect">你的网络好像不太好</string>
+    <string name="error_loading">请求数据失败，详情请查看错误日志，%1$s</string>
 </resources>
