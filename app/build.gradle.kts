@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
     // kotlin序列化
     alias(libs.plugins.kotlin.serialization)
 
@@ -38,7 +39,31 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+    //region 偏好设置和渠道
+    flavorDimensions += listOf("env", "channel")
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            //API端点
+            buildConfigField("String", "ENDPOINT", "\"http://119.23.146.194:8080/\"")
+        }
+        create("local") {
+            dimension = "env"
+            //API端点
+            buildConfigField("String", "ENDPOINT", "\"http://127.0.0.1:3307/\"")
+        }
+        create("default") {
+            dimension = "channel"
+            versionNameSuffix = ".default"
+        }
+        create("play") {
+            dimension = "channel"
+            versionNameSuffix = "-play"
+        }
+    }
+    //end region
 }
 
 dependencies {
@@ -73,4 +98,23 @@ dependencies {
 
     // 系统splash screen
     implementation(libs.androidx.core.splashscreen)
+
+    // 内存泄露检测，只在 debug 包生效
+    debugImplementation(libs.leakcanary.android)
+
+    // 网络请求检测，debug 用真库，release 用空实现
+    debugImplementation(libs.chucker.library)
+    releaseImplementation(libs.chucker.library.no.op)
+
+    // region 网络请求
+    // OkHttp
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    // Kotlinx Serialization JSON
+    implementation(libs.kotlinx.serialization.json)
+    // end region
+
 }
