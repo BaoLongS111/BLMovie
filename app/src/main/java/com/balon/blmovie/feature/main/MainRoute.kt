@@ -1,12 +1,12 @@
 package com.balon.blmovie.feature.main
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,16 +21,24 @@ import com.balon.blmovie.feature.category.CategoryRoute
 import com.balon.blmovie.feature.home.HomeRoute
 import com.balon.blmovie.feature.mine.MineRoute
 import com.balon.blmovie.feature.shortvideo.ShortVideoRoute
-import com.balon.blmovie.ui.LightDarkPreviews
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainRoute() {
-    MainScreen()
+fun MainRoute(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope
+) {
+    MainScreen(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope
+    )
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedContentScope: AnimatedContentScope? = null
+) {
     //当前选中的界面名称
     var currentDestination by rememberSaveable {
         mutableStateOf(TopLevelDestination.HOME.tag)
@@ -51,12 +59,16 @@ fun MainScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-        ) { page->
-            when(page){
-                0-> HomeRoute()
-                1-> ShortVideoRoute()
-                2-> CategoryRoute()
-                3-> ArticleRoute()
+        ) { page ->
+            when (page) {
+                0 -> HomeRoute(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedContentScope = animatedContentScope
+                )
+
+                1 -> ShortVideoRoute()
+                2 -> CategoryRoute()
+                3 -> ArticleRoute()
                 else -> MineRoute()
             }
 

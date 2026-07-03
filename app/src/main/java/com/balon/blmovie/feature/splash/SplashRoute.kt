@@ -1,5 +1,7 @@
 package com.balon.blmovie.feature.splash
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -30,23 +32,29 @@ import androidx.compose.ui.unit.dp
 import com.balon.blmovie.R
 import com.balon.blmovie.core.design.theme.AppLogoIcon
 import com.balon.blmovie.core.design.theme.SpaceMediumHeight
-import com.balon.blmovie.ui.LightDarkPreviews
+import com.balon.blmovie.util.Constant
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashRoute(
-    toGuide:()->Unit,
-    toMain:()-> Unit
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    toGuide: () -> Unit,
+    toMain: () -> Unit
 ) {
     SplashScreen(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
         toMain = toMain
     )
 }
 
 @Composable
 fun SplashScreen(
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedContentScope: AnimatedContentScope? = null,
     toMain: () -> Unit = {}
-){
+) {
     // 动画状态
     var startAnimation by rememberSaveable {
         mutableStateOf(false)
@@ -72,7 +80,7 @@ fun SplashScreen(
 
     // Logo 旋转
     val logoRotation by animateFloatAsState(
-        targetValue = if (startAnimation) 0f else -30f,
+        targetValue = if (startAnimation) 0f else -15f,
         animationSpec = tween(durationMillis = 1000),
         label = "logoRotation"
     )
@@ -108,7 +116,9 @@ fun SplashScreen(
             logoOffsetY = logoOffsetY,
             logoRotation = logoRotation,
             logoAlpha = logoAlpha,
-            textAlpha = textAlpha
+            textAlpha = textAlpha,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope
         )
     }
 }
@@ -143,7 +153,9 @@ fun ForegroundContentSection(
     logoOffsetY: Dp,
     logoRotation: Float,
     logoAlpha: Float,
-    textAlpha: Float
+    textAlpha: Float,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedContentScope: AnimatedContentScope? = null
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -152,16 +164,36 @@ fun ForegroundContentSection(
         // 上方空白，把 Logo 推到中间
         Spacer(modifier = Modifier.weight(1f))
 
-        // 前景 Logo
-        AppLogoIcon(
-            modifier = Modifier
-                .offset(y = logoOffsetY)
-                .rotate(logoRotation)
-                .alpha(logoAlpha),
-            size = 120.dp
-        )
+        val logoModifier = Modifier
+            .offset(y = logoOffsetY)
+            .rotate(logoRotation)
+            .alpha(logoAlpha)
 
-        Spacer(modifier = Modifier.weight(0.5f))
+        val finalLogoModifier =
+            if (sharedTransitionScope != null && animatedContentScope != null) {
+                with(sharedTransitionScope) {
+                    logoModifier.sharedElement(
+                        sharedContentState = rememberSharedContentState(key = Constant.LOGO_KEY),
+                        animatedVisibilityScope = animatedContentScope,
+                        boundsTransform = Constant.LogoBoundsTransform
+                    )
+                }
+            } else {
+                logoModifier
+            }
+
+
+        // 前景 Logo
+        // 用sharedTransitionScope共享出去
+        with(sharedTransitionScope) {
+            AppLogoIcon(
+                modifier = finalLogoModifier,
+                size = 120.dp
+            )
+        }
+
+
+        Spacer(modifier = Modifier.weight(1f))
 
         // 底部文字
         Column(
@@ -182,12 +214,15 @@ fun ForegroundContentSection(
             )
         }
 
+        // 底部边距
         Spacer(modifier = Modifier.weight(0.3f))
     }
 }
 
 @Preview
 @Composable
-fun SplashScreenPreview(){
-    SplashScreen()
+fun SplashScreenPreview() {
+    SplashScreen(
+
+    )
 }
