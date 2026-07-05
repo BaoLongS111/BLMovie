@@ -21,11 +21,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,12 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,31 +52,34 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.balon.blmovie.R
+import com.balon.blmovie.core.design.component.MyErrorScreen
+import com.balon.blmovie.core.design.component.MyLoadingScreen
+import com.balon.blmovie.core.design.component.MyPullToRefreshBox
 import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.design.theme.SpaceExtraMedium
 import com.balon.blmovie.core.design.theme.SpaceMedium
 import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.design.theme.SpaceSmallWidth
+import com.balon.blmovie.core.model.LoadMoreState
+import com.balon.blmovie.core.model.PageState
+import com.balon.blmovie.core.model.RefreshState
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.util.Constant
 import com.quick.app.core.extension.clickableNoRipple
 import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
 import com.tbuonomo.viewpagerdotsindicator.compose.model.DotGraphic
 import com.tbuonomo.viewpagerdotsindicator.compose.type.ShiftIndicatorType
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun HomeRoute(
@@ -87,23 +89,28 @@ fun HomeRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-
     HomeScreen(
         uiState = uiState,
         sharedTransitionScope = sharedTransitionScope,
-        animatedContentScope = animatedContentScope
+        animatedContentScope = animatedContentScope,
+        onRefresh = viewModel::refresh,
+        onLoadMore = viewModel::loadMore,
+        onRetry = viewModel::retry
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    uiState: HomeUiState? = null,
+    uiState: HomeUiState,
     sharedTransitionScope: SharedTransitionScope? = null,
-    animatedContentScope: AnimatedContentScope? = null
+    animatedContentScope: AnimatedContentScope? = null,
+    onRefresh: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
-
-    val banners = uiState?.banners.orEmpty()
+    val pageState = uiState.pageState
+    val banners = uiState.banners
 
     Scaffold(
         topBar = {
@@ -118,20 +125,73 @@ fun HomeScreen(
             .exclude(WindowInsets.navigationBars)
 //            .exclude(WindowInsets.ime)
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-        ) {
-            // 轮播图
-            Banners(
-                banners = banners
-            )
+        when (pageState) {
+            is PageState.Loading -> {
+                MyLoadingScreen()
+            }
+
+            is PageState.Error -> {
+                MyErrorScreen(
+                    throwable = pageState.throwable,
+                    onRetryClick = onRetry
+                )
+            }
+
+            is PageState.Success -> {
+                MyPullToRefreshBox(
+                    isRefreshing = uiState.refreshState == RefreshState.REFRESHING,
+                    onRefresh = onRefresh,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    LazyColumn {
+                        // 轮播图
+                        item {
+                            Banners(
+                                banners = banners
+                            )
+                        }
+                        item {
+                            LoadMoreFooter(
+                                loadMoreState = uiState.loadMoreState
+                            )
+                        }
+                    }
+
+                }
+            }
         }
 
     }
+}
 
+@Composable
+fun LoadMoreFooter(
+    loadMoreState: LoadMoreState
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        when (loadMoreState) {
+            LoadMoreState.LOADING -> {
+                CircularProgressIndicator()
+            }
 
+            LoadMoreState.ERROR -> {
+                Text("加载失败，稍后重试")
+            }
+
+            LoadMoreState.NO_MORE -> {
+                Text("没有更多了")
+            }
+
+            else -> Unit
+        }
+    }
 }
 
 @Composable
@@ -151,7 +211,7 @@ fun Banners(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(SpaceSmall)
+            .padding(horizontal = SpaceSmall)
             .aspectRatio(16f / 9f)
             .clip(MaterialTheme.shapes.medium)
             .pointerInput(Unit) {
@@ -218,13 +278,13 @@ fun Banners(
     // 自动轮播
     val lifeCycle = LocalLifecycleOwner.current.lifecycle
 
-    LaunchedEffect(key1 = lifeCycle,key2 = banners.size) {
+    LaunchedEffect(key1 = lifeCycle, key2 = banners.size) {
         if (banners.size <= 1) {
             return@LaunchedEffect
         }
         lifeCycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             while (true) {
-                delay(3000L)
+                delay(3000L.milliseconds)
 
                 if (isUserHolding || pageState.isScrollInProgress) {
                     continue
@@ -325,6 +385,8 @@ fun MyHomeAppBar(
 @Composable
 fun HomeScreenPreview() {
     BLMovieTheme {
-        HomeScreen()
+        HomeScreen(
+            uiState = HomeUiState(pageState = PageState.Success)
+        )
     }
 }

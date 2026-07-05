@@ -127,4 +127,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
+    // lottie动画
+    implementation(libs.lottie.compose)
+
 }

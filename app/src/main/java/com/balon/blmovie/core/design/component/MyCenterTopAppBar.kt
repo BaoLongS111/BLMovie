@@ -12,6 +12,8 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import com.balon.blmovie.core.design.theme.BLMovieTheme
 
 /**
  * 居中的TopAppBar
@@ -45,4 +47,12 @@ fun MyCenterTopAppBar(
         actions = actions,
         colors = colors,
     )
+}
+
+@Preview
+@Composable
+fun MyCenterTopAppBarPreview(){
+    BLMovieTheme() {
+        MyCenterTopAppBar()
+    }
 }

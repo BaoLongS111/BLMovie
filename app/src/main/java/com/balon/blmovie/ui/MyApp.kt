@@ -19,19 +19,17 @@ import com.balon.blmovie.feature.splash.navigation.splashScreen
 /**
  * 全局功能
  */
-@SuppressLint("ContextCastToActivity")
 @Composable
 fun MyApp() {
 
     val backStack = rememberNavBackStack(SplashRoutes.Splash)
-    val activity = LocalContext.current as? Activity
     SharedTransitionLayout {
         NavDisplay(
             backStack = backStack,
             onBack = {
                 if (backStack.lastOrNull() == MainRoutes.Main) {
                     // 这里可以直接退出 Activity，或者什么都不做
-                    activity?.finish()
+                    backStack.removeLastOrNull()
                 } else if (backStack.size > 1) {
                     backStack.removeLastOrNull()
                 }

@@ -51,9 +51,9 @@ class NetworkModule {
     @Singleton
     fun providesOkHttpClient() : OkHttpClient{
         return OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)  //连接超时时间
-            .writeTimeout(30, TimeUnit.SECONDS)  // 写超时时间
-            .readTimeout(30, TimeUnit.SECONDS)   // 读超时时间
+            .connectTimeout(5, TimeUnit.SECONDS)  //连接超时时间
+            .writeTimeout(10, TimeUnit.SECONDS)  // 写超时时间
+            .readTimeout(10, TimeUnit.SECONDS)   // 读超时时间
             //添加拦截器
             .addInterceptor(HttpLoggingInterceptor().apply {
                 // 如果是DEBUG模式下，每次网络请求都会在LogCat打印出请求体

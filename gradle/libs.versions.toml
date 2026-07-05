@@ -39,6 +39,8 @@ timber = "5.0.1"
 # 图片框架
 coil = "3.5.0"
 
+# lottie动画
+lottie = "6.6.9"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -96,6 +98,9 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 # 图片框架
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+
+# lottie动画
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
