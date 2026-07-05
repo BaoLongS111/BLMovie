@@ -5,6 +5,9 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,19 +34,31 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.balon.blmovie.R
 import com.balon.blmovie.core.design.theme.BLMovieTheme
@@ -51,11 +66,18 @@ import com.balon.blmovie.core.design.theme.SpaceExtraMedium
 import com.balon.blmovie.core.design.theme.SpaceMedium
 import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.design.theme.SpaceSmallWidth
+import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.util.Constant
 import com.quick.app.core.extension.clickableNoRipple
 import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
 import com.tbuonomo.viewpagerdotsindicator.compose.model.DotGraphic
 import com.tbuonomo.viewpagerdotsindicator.compose.type.ShiftIndicatorType
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun HomeRoute(
@@ -64,6 +86,7 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
 
     HomeScreen(
         uiState = uiState,
@@ -79,6 +102,9 @@ fun HomeScreen(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null
 ) {
+
+    val banners = uiState?.banners.orEmpty()
+
     Scaffold(
         topBar = {
             MyHomeAppBar(
@@ -99,27 +125,45 @@ fun HomeScreen(
         ) {
             // 轮播图
             Banners(
-                uiState = uiState
+                banners = banners
             )
         }
 
     }
+
+
 }
 
 @Composable
 fun Banners(
-    uiState: HomeUiState? = null,
+    banners: List<Movie>,
     modifier: Modifier = Modifier
 ) {
-    val banners = uiState!!.banners
-    val pageState = rememberPagerState { banners.size }
 
+    if (banners.isEmpty()) {
+        return
+    }
+
+    val pageState = rememberPagerState { banners.size }
+    var isUserHolding by remember {
+        mutableStateOf(false)
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(SpaceSmall)
             .aspectRatio(16f / 9f)
             .clip(MaterialTheme.shapes.medium)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    //监听用户按下和抬起手势
+                    awaitFirstDown(requireUnconsumed = false)
+                    isUserHolding = true
+
+                    waitForUpOrCancellation()
+                    isUserHolding = false
+                }
+            }
     ) {
         HorizontalPager(
             state = pageState,
@@ -171,7 +215,36 @@ fun Banners(
 
     }
 
+    // 自动轮播
+    val lifeCycle = LocalLifecycleOwner.current.lifecycle
+
+    LaunchedEffect(key1 = lifeCycle,key2 = banners.size) {
+        if (banners.size <= 1) {
+            return@LaunchedEffect
+        }
+        lifeCycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(3000L)
+
+                if (isUserHolding || pageState.isScrollInProgress) {
+                    continue
+                }
+
+                val nextPage = (pageState.currentPage + 1) % banners.size
+
+                try {
+                    pageState.animateScrollToPage(nextPage)
+                } catch (e: CancellationException) {
+                    if (!currentCoroutineContext().isActive) {
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
