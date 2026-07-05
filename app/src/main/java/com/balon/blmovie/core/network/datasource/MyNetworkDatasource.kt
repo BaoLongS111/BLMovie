@@ -1,8 +1,10 @@
 package com.balon.blmovie.core.network.datasource
 
+import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
+import retrofit2.http.QueryMap
 
 /**
  * 2
@@ -16,4 +18,13 @@ interface MyNetworkDatasource {
      * 首页轮播图
      */
     suspend fun banners(): NetworkResponse<List<Movie>>
+
+    /**
+     * 影视类别
+     */
+    suspend fun categories(): NetworkResponse<List<Category>>
+
+    suspend fun japanKoreanMovie(
+        data:Map<String,String>
+    ): NetworkResponse<NetworkPageData<Movie>>
 }

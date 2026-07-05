@@ -1,9 +1,11 @@
 package com.balon.blmovie.core.network.apiservice
 
+import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
 import retrofit2.http.GET
+import retrofit2.http.QueryMap
 
 /**
  * 1
@@ -33,5 +35,20 @@ interface MyNetworkApiService {
      */
     @GET("api/v1/videos/banners")
     suspend fun banners(): NetworkResponse<List<Movie>>
+
+    /**
+     * 影视类别
+     */
+    @GET("api/v1/categories")
+    suspend fun categories(): NetworkResponse<List<Category>>
+
+    // 动作片6 喜剧片7 爱情片8 科幻片9 恐怖片10 剧情片11 国产剧13 欧美剧16
+   // 记录片20 大陆综艺25 日韩动漫30 国产动漫29 欧美动漫31 AI漫剧52
+
+    @GET("api/v1/videos")
+    suspend fun japanKoreanMovie(
+        @QueryMap data:Map<String,String>
+    ): NetworkResponse<NetworkPageData<Movie>>
+
 
 }

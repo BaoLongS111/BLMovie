@@ -1,18 +1,24 @@
 package com.balon.blmovie.feature.home
 
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.balon.blmovie.R
 import com.balon.blmovie.core.data.repository.MovieRepository
+import com.balon.blmovie.core.exception.CommonException
 import com.balon.blmovie.core.extension.asResult
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.RefreshState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -28,6 +34,7 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private var startTime: Long = 0
 
     init {
         loadData()
@@ -37,6 +44,7 @@ class HomeViewModel @Inject constructor(
      * 第一次加载首页
      */
     private fun loadData() {
+        startTime = System.currentTimeMillis()
         viewModelScope.launch {
 
             // 设置第一次加载状态
@@ -49,45 +57,92 @@ class HomeViewModel @Inject constructor(
                 )
             }
 
-            loadBanners()
+            // 创建异步任务
+            val bannerJob = async {
+                movieRepository.banners().asResult().first()
+            }
+            val categoryJob = async {
+                movieRepository.categories().asResult().first()
+            }
+            val japanKoreanMovieJob = async {
+                movieRepository.japanKoreanMovie(mapOf(
+                    "typeId" to "30","page" to "1","size" to "6"
+                )).asResult().first()
+            }
+
+            // 等待所有作业完成
+            val bannerResult = bannerJob.await()
+            val categoryResult = categoryJob.await()
+            val japanKoreanMovieResult = japanKoreanMovieJob.await()
+
+            // 最少要有1S的延迟
+            val endTime = System.currentTimeMillis()
+            val consume = endTime - startTime
+            if (consume < EXPECTED_COMSUME_TIME) {
+                val delayTimeMillis = EXPECTED_COMSUME_TIME - consume
+                Timber.d("loadData delay %d", delayTimeMillis)
+                delay(delayTimeMillis)
+            }
+
+            if (bannerResult.isFailure || categoryResult.isFailure|| japanKoreanMovieResult.isFailure) {
+                //发生异常了，例如：网络错误，解析数据失败等
+                val throwable = bannerResult.exceptionOrNull() ?: categoryResult.exceptionOrNull()
+                _uiState.update {
+                    it.copy(
+                        pageState = PageState.Error(
+                            throwable = throwable!!
+                        )
+                    )
+                }
+                return@launch
+            }
+
+            //都请求成功
+
+            //判断业务是否请求成功
+            val bannerResultData = bannerResult.getOrNull()!!
+            val categoryResultData = categoryResult.getOrNull()!!
+            val japanKoreanMovieResultData = japanKoreanMovieResult.getOrNull()!!
+
+            if (!bannerResultData.isSucceed) {
+                //业务失败
+                _uiState.update {
+                    it.copy(
+                        pageState = PageState.Error(
+                            throwable = CommonException(bannerResultData)
+                        )
+                    )
+                }
+                return@launch
+            }
+
+            if (!categoryResultData.isSucceed) {
+                //业务失败
+                _uiState.update {
+                    it.copy(
+                        pageState = PageState.Error(
+                            throwable = CommonException(categoryResultData)
+                        )
+                    )
+                }
+                return@launch
+            }
+
+            //所有请求都业务成功
+            _uiState.update {
+                it.copy(
+                    pageState = PageState.Success,
+                    banners = bannerResultData.data?:emptyList(),
+                    categories = categoryResultData.data?:emptyList(),
+                    japanKoreanMovie = japanKoreanMovieResultData.data?.list?:emptyList(),
+                    refreshState = RefreshState.IDLE,
+                    loadMoreState = LoadMoreState.IDLE,
+                )
+            }
 
         }
     }
 
-    /**
-     * 加载轮播图
-     */
-    private suspend fun loadBanners() {
-        delay(2000L.milliseconds)
-        movieRepository.banners()
-            .asResult()
-            .collectLatest { result ->
-                if (result.isSuccess) {
-                    // 请求成功
-                    _uiState.update {
-                        it.copy(
-                            pageState = PageState.Success,
-                            banners = result.getOrThrow().data!!,
-                            refreshState = RefreshState.IDLE,
-                            loadMoreState = LoadMoreState.IDLE,
-                        )
-                    }
-                } else {
-                    // 请求失败
-                    val throwable = result.exceptionOrNull()!!
-                    _uiState.update {
-                        it.copy(
-                            pageState = PageState.Error(
-                                throwable = throwable
-                            ),
-                            refreshState = RefreshState.ERROR,
-                            loadMoreState = LoadMoreState.ERROR,
-                        )
-                    }
-                }
-
-            }
-    }
 
     fun reload() {
 
@@ -96,23 +151,110 @@ class HomeViewModel @Inject constructor(
     fun refresh() {
         val currentState = _uiState.value
 
-        if (currentState.refreshState == RefreshState.REFRESHING) return
+        // 如果正在刷新，就不要重复刷新
+        if (currentState.refreshState == RefreshState.REFRESHING) {
+            return
+        }
 
         viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+
+            // 设置刷新中状态
             _uiState.update {
                 it.copy(
                     refreshState = RefreshState.REFRESHING,
                 )
             }
 
-            loadBanners()
+            // 并行请求 banner 和 category
+            val bannerJob = async {
+                movieRepository.banners()
+                    .asResult()
+                    .first()
+            }
+            val categoryJob = async {
+                movieRepository.categories()
+                    .asResult()
+                    .first()
+            }
+            val japanKoreanMovieJob = async {
+                movieRepository.japanKoreanMovie(mapOf(
+                    "typeId" to "30","page" to "1","size" to "6"
+                )).asResult().first()
+            }
 
+
+            val bannerResult = bannerJob.await()
+            val categoryResult = categoryJob.await()
+            val japanKoreanMovieResult = japanKoreanMovieJob.await()
+
+            // 最少显示一段刷新动画，避免刷新太快一闪而过
+            val endTime = System.currentTimeMillis()
+            val consume = endTime - startTime
+
+            if (consume < EXPECTED_COMSUME_TIME) {
+                val delayTimeMillis = EXPECTED_COMSUME_TIME - consume
+                Timber.d("refresh delay %d", delayTimeMillis)
+                delay(delayTimeMillis.milliseconds)
+            }
+
+            // 只要有一个失败，就认为刷新失败
+            if (bannerResult.isFailure || categoryResult.isFailure||japanKoreanMovieResult.isFailure) {
+                val throwable =
+                    bannerResult.exceptionOrNull()
+                        ?: categoryResult.exceptionOrNull()
+
+                _uiState.update {
+                    it.copy(
+                        refreshState = RefreshState.ERROR
+                    )
+                }
+                return@launch
+            }
+            //都请求成功
+            // 判断业务是否成功
+            val bannerResultData = bannerResult.getOrNull()!!
+            val categoryResultData = categoryResult.getOrNull()!!
+            val japanKoreanMovieResultData = japanKoreanMovieResult.getOrNull()!!
+
+            if (!bannerResultData.isSucceed) {
+                //业务失败
+                // 相当于AsResult里没走这里
+                // if (it.isSucceed) {
+                //            Result.success(it)
+                //        }
+                //走了Result.failure(CommonException(it))这里，但是上面好像拦截了这个错误
+                _uiState.update {
+                    it.copy(
+                        pageState = PageState.Error(
+                            throwable = CommonException(bannerResultData)
+                        )
+                    )
+                }
+                return@launch
+            }
+
+            if (!categoryResultData.isSucceed) {
+                //业务失败
+                _uiState.update {
+                    it.copy(
+                        pageState = PageState.Error(
+                            throwable = CommonException(categoryResultData)
+                        )
+                    )
+                }
+                return@launch
+            }
+            // 全部成功，更新数据
             _uiState.update {
                 it.copy(
+                    banners = bannerResultData.data ?: emptyList(),
+                    categories = categoryResultData.data ?: emptyList(),
+                    japanKoreanMovie = japanKoreanMovieResultData.data?.list?:emptyList(),
                     refreshState = RefreshState.SUCCESS,
                 )
             }
-            Timber.d("首页刷新成功")
+
         }
     }
 
@@ -126,6 +268,30 @@ class HomeViewModel @Inject constructor(
 
 
     }
+     fun clearSuccess() {
+        _uiState.update {
+            if (it.refreshState == RefreshState.SUCCESS) {
+                it.copy(
+                    refreshState = RefreshState.IDLE,
+                )
+            } else {
+                it
+            }
+        }
+    }
+     fun clearError() {
+        _uiState.update {
+            if (it.refreshState == RefreshState.ERROR) {
+                it.copy(
+                    refreshState = RefreshState.IDLE,
+                )
+            } else {
+                it
+            }
+        }
+    }
 
-
+    companion object {
+        const val EXPECTED_COMSUME_TIME = 1500
+    }
 }

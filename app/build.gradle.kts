@@ -130,4 +130,7 @@ dependencies {
     // lottie动画
     implementation(libs.lottie.compose)
 
+    // 吐司框架：https://github.com/getActivity/Toaster
+    implementation("com.github.getActivity:Toaster:15.0")
+
 }

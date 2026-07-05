@@ -1,5 +1,6 @@
 package com.balon.blmovie.core.data.repository
 
+import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -47,13 +48,22 @@ class MovieRepository @Inject constructor(
      * 数据库监听 本地缓存 + 网络刷新 分页数据流 搜索关键词变化 用户登录状态变化 购物车列表变化
      */
 
-    fun banners() : Flow<NetworkResponse<List<Movie>>>{
-        return flow{
+    fun banners(): Flow<NetworkResponse<List<Movie>>> {
+        return flow {
             emit(
                 networkDatasource.banners()
             )
         }.flowOn(Dispatchers.IO)
     }
+
+    fun categories(): Flow<NetworkResponse<List<Category>>> = flow {
+        emit(networkDatasource.categories())
+    }.flowOn(Dispatchers.IO)
+
+    fun japanKoreanMovie(data: Map<String, String>): Flow<NetworkResponse<NetworkPageData<Movie>>> =
+        flow {
+            emit(networkDatasource.japanKoreanMovie(data))
+        }.flowOn(Dispatchers.IO)
 
 
 }

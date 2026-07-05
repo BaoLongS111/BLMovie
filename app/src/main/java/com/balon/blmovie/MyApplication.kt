@@ -2,6 +2,7 @@ package com.balon.blmovie
 
 import android.app.Application
 import com.balon.blmovie.core.config.Config
+import com.hjq.toast.Toaster
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -13,6 +14,12 @@ class MyApplication : Application() {
         instance = this
 
         initLog()
+        initToast()
+    }
+
+    private fun initToast(){
+        // 初始化 Toast 框架
+        Toaster.init(this)
     }
 
     /**

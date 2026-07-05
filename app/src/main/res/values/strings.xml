@@ -11,4 +11,6 @@
     <string name="error_network_not_connect">你的网络好像不太好</string>
     <string name="error_loading">请求数据失败，详情请查看错误日志，%1$s</string>
     <string name="retry">点击重试</string>
+    <string name="refresh_error">刷新失败</string>
+    <string name="refresh_success">刷新成功</string>
 </resources>

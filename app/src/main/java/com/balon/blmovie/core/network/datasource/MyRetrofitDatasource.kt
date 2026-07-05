@@ -1,6 +1,7 @@
 package com.balon.blmovie.core.network.datasource
 
 import com.balon.blmovie.core.config.Config
+import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -41,6 +42,17 @@ class MyRetrofitDatasource @Inject constructor(
      */
     override suspend fun banners(): NetworkResponse<List<Movie>> {
         return service.banners()
+    }
+
+    /**
+     * 影视类别
+     */
+    override suspend fun categories(): NetworkResponse<List<Category>> {
+        return service.categories()
+    }
+
+    override suspend fun japanKoreanMovie(data: Map<String, String>): NetworkResponse<NetworkPageData<Movie>> {
+        return service.japanKoreanMovie(data)
     }
 
 
