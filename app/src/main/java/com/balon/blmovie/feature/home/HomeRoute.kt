@@ -112,7 +112,8 @@ import kotlin.time.Duration.Companion.milliseconds
 fun HomeRoute(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    onMovieClick: (Movie) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -139,7 +140,8 @@ fun HomeRoute(
         animatedContentScope = animatedContentScope,
         onRefresh = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
-        onRetry = viewModel::retry
+        onRetry = viewModel::retry,
+        onMovieClick = onMovieClick
     )
 }
 

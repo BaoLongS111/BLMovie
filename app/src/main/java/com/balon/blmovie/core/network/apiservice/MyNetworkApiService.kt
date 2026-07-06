@@ -7,6 +7,7 @@ import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.QueryMap
 
 /**
@@ -60,7 +61,15 @@ interface MyNetworkApiService {
 
     @GET("api/v1/articles")
     suspend fun articleList(
-        @QueryMap data:Map<String, String>
+        @QueryMap data: Map<String, String>
     ): NetworkResponse<NetworkPageData<Article>>
+
+    /**
+     * 获取影视详情
+     */
+    @GET("api/v1/videos/{movieId}")
+    suspend fun movieDetail(
+        @Path("movieId") movieId: Long
+    ): NetworkResponse<Movie>
 
 }

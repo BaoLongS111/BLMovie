@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.balon.blmovie.core.design.theme.BLMovieTheme
+import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.article.ArticleRoute
 import com.balon.blmovie.feature.category.CategoryRoute
 import com.balon.blmovie.feature.home.HomeRoute
@@ -28,18 +29,21 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainRoute(
     sharedTransitionScope: SharedTransitionScope,
-    animatedContentScope: AnimatedContentScope
+    animatedContentScope: AnimatedContentScope,
+    onMovieClick:(Movie)-> Unit
 ) {
     MainScreen(
         sharedTransitionScope = sharedTransitionScope,
-        animatedContentScope = animatedContentScope
+        animatedContentScope = animatedContentScope,
+        onMovieClick = onMovieClick
     )
 }
 
 @Composable
 fun MainScreen(
     sharedTransitionScope: SharedTransitionScope? = null,
-    animatedContentScope: AnimatedContentScope? = null
+    animatedContentScope: AnimatedContentScope? = null,
+    onMovieClick:(Movie)-> Unit = {}
 ) {
     //当前选中的界面名称
     var currentDestination by rememberSaveable {
@@ -65,7 +69,8 @@ fun MainScreen(
             when (page) {
                 0 -> HomeRoute(
                     sharedTransitionScope = sharedTransitionScope,
-                    animatedContentScope = animatedContentScope
+                    animatedContentScope = animatedContentScope,
+                    onMovieClick = onMovieClick
                 )
 
                 1 -> ShortVideoRoute()

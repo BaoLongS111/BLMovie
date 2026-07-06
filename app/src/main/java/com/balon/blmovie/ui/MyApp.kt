@@ -13,6 +13,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.balon.blmovie.feature.main.navigation.MainRoutes
 import com.balon.blmovie.feature.main.navigation.mainScreen
 import com.balon.blmovie.feature.main.navigation.navigateToMain
+import com.balon.blmovie.feature.moviedetail.navigation.movieDetailScreen
+import com.balon.blmovie.feature.moviedetail.navigation.navigateToMovieDetail
 import com.balon.blmovie.feature.splash.navigation.SplashRoutes
 import com.balon.blmovie.feature.splash.navigation.splashScreen
 
@@ -43,7 +45,7 @@ fun MyApp() {
                 splashScreen(
                     sharedTransitionScope = this@SharedTransitionLayout,
                     toGuide = {
-                        // 后面你有 Guide 页面时，在这里跳 Guide
+                        // 后面你有 Guide页面时，在这里跳 Guide
                         // backStack.add(GuideRoutes.Guide)
                     },
                     toMain = backStack::navigateToMain
@@ -51,6 +53,12 @@ fun MyApp() {
 
                 mainScreen(
                     sharedTransitionScope = this@SharedTransitionLayout,
+                    onMovieClick = {it->
+                        backStack.navigateToMovieDetail(it.vodId)
+                    }
+                )
+                movieDetailScreen(
+                    onBack = { backStack.removeLastOrNull() }
                 )
             }
         )

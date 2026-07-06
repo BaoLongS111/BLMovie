@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 /**
- * 视频仓库
+ * 主页仓库
  */
 class HomeRepository @Inject constructor(
     private val networkDatasource: MyNetworkDatasource

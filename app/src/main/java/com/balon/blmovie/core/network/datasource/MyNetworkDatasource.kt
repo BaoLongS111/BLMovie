@@ -7,6 +7,8 @@ import com.balon.blmovie.core.model.HomeData
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
+import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.QueryMap
 
 /**
@@ -36,4 +38,11 @@ interface MyNetworkDatasource {
     suspend fun articleList(
         data:Map<String, String>
     ): NetworkResponse<NetworkPageData<Article>>
+
+    /**
+     * 影视详情
+     */
+    suspend fun movieDetail(
+        movieId: Long
+    ): NetworkResponse<Movie>
 }

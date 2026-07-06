@@ -67,5 +67,9 @@ class MyRetrofitDatasource @Inject constructor(
         return service.articleList(data)
     }
 
+    override suspend fun movieDetail(movieId: Long): NetworkResponse<Movie> {
+        return service.movieDetail(movieId = movieId)
+    }
+
 
 }

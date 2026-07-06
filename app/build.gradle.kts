@@ -133,4 +133,10 @@ dependencies {
     // 吐司框架：https://github.com/getActivity/Toaster
     implementation("com.github.getActivity:Toaster:15.0")
 
+    // 视频播放器
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.10.1")
+    implementation("androidx.media3:media3-ui:1.10.1")
+    implementation("androidx.media3:media3-ui-compose:1.10.1")
+
 }

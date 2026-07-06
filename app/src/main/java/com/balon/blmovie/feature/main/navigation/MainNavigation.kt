@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.main.MainRoute
 import kotlinx.serialization.Serializable
 
@@ -31,12 +32,14 @@ fun NavBackStack<NavKey>.navigateToMain(){
  * Main 页面注册
  */
 fun EntryProviderScope<NavKey>.mainScreen(
-    sharedTransitionScope: SharedTransitionScope
+    sharedTransitionScope: SharedTransitionScope,
+    onMovieClick:(Movie)-> Unit
 ) {
     entry<MainRoutes.Main> {
         MainRoute(
             sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = LocalNavAnimatedContentScope.current
+            animatedContentScope = LocalNavAnimatedContentScope.current,
+            onMovieClick = onMovieClick
         )
     }
 }
