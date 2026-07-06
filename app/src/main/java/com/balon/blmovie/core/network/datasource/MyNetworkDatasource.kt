@@ -1,6 +1,9 @@
 package com.balon.blmovie.core.network.datasource
 
+import android.net.Network
+import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
+import com.balon.blmovie.core.model.HomeData
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -27,4 +30,10 @@ interface MyNetworkDatasource {
     suspend fun japanKoreanMovie(
         data:Map<String,String>
     ): NetworkResponse<NetworkPageData<Movie>>
+
+    suspend fun homeData(): NetworkResponse<HomeData>
+
+    suspend fun articleList(
+        data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<Article>>
 }

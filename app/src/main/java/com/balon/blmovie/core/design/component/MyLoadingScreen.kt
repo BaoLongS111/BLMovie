@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
@@ -24,7 +25,7 @@ import com.balon.blmovie.core.design.theme.BLMovieTheme
 @Composable
 fun MyLoadingScreen(
     modifier: Modifier = Modifier,
-    message: String = "正在加载..."
+    message: String = stringResource(R.string.loading) + "..."
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(R.raw.loading)
@@ -60,7 +61,7 @@ fun MyLoadingScreen(
 
 @Preview
 @Composable
-fun MyLoadingScreenPreview(){
+fun MyLoadingScreenPreview() {
     BLMovieTheme() {
         MyLoadingScreen()
     }

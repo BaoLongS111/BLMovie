@@ -1,6 +1,8 @@
 package com.balon.blmovie.feature.home
 
+import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
+import com.balon.blmovie.core.model.HomeData
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.RefreshState
@@ -15,14 +17,14 @@ data class HomeUiState(
     val banners: List<Movie> = emptyList(),
 
     /**
-     * 影视种类
+     * 首页数据聚合
      */
-    val categories:List<Category> = emptyList(),
+    val homeData: HomeData? = null,
 
     /**
-     * 首页电影列表
+     * 文章列表
      */
-    val japanKoreanMovie: List<Movie> = emptyList(),
+    val articleList: List<Article>? = emptyList(),
 
     /**
      * 整个页面状态
@@ -45,4 +47,4 @@ data class HomeUiState(
     val pageMeta: NetworkPageMeta? = null,
 
 
-)
+    )

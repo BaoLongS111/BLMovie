@@ -1,6 +1,8 @@
 package com.balon.blmovie.core.network.apiservice
 
+import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
+import com.balon.blmovie.core.model.HomeData
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -43,12 +45,22 @@ interface MyNetworkApiService {
     suspend fun categories(): NetworkResponse<List<Category>>
 
     // 动作片6 喜剧片7 爱情片8 科幻片9 恐怖片10 剧情片11 国产剧13 欧美剧16
-   // 记录片20 大陆综艺25 日韩动漫30 国产动漫29 欧美动漫31 AI漫剧52
+    // 记录片20 大陆综艺25 日韩动漫30 国产动漫29 欧美动漫31 AI漫剧52
 
     @GET("api/v1/videos")
     suspend fun japanKoreanMovie(
-        @QueryMap data:Map<String,String>
+        @QueryMap data: Map<String, String>
     ): NetworkResponse<NetworkPageData<Movie>>
 
+
+    @GET("api/v1/home")
+    suspend fun homeData(
+    ): NetworkResponse<HomeData>
+
+
+    @GET("api/v1/articles")
+    suspend fun articleList(
+        @QueryMap data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<Article>>
 
 }

@@ -1,6 +1,8 @@
 package com.balon.blmovie.core.data.repository
 
+import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
+import com.balon.blmovie.core.model.HomeData
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -14,7 +16,7 @@ import javax.inject.Inject
 /**
  * 视频仓库
  */
-class MovieRepository @Inject constructor(
+class HomeRepository @Inject constructor(
     private val networkDatasource: MyNetworkDatasource
 ) {
     // suspend：适合一次性异步任务
@@ -65,5 +67,14 @@ class MovieRepository @Inject constructor(
             emit(networkDatasource.japanKoreanMovie(data))
         }.flowOn(Dispatchers.IO)
 
+    fun homeData(): Flow<NetworkResponse<HomeData>> = flow {
+        emit(networkDatasource.homeData())
+    }.flowOn(Dispatchers.IO)
+
+    fun articleList(
+        data:Map<String, String>
+    ):Flow<NetworkResponse<NetworkPageData<Article>>> = flow{
+        emit(networkDatasource.articleList(data))
+    }.flowOn(Dispatchers.IO)
 
 }

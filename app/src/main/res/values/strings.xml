@@ -4,7 +4,7 @@
     <string name="tab_home">推荐</string>
     <string name="tab_short_video">短视频</string>
     <string name="tab_category">分类</string>
-    <string name="tab_article">文章</string>
+    <string name="tab_article">资讯</string>
     <string name="tab_mine">我的</string>
     <string name="search_tip">搜索</string>
     <string name="unknown_error">未知错误</string>
@@ -13,4 +13,21 @@
     <string name="retry">点击重试</string>
     <string name="refresh_error">刷新失败</string>
     <string name="refresh_success">刷新成功</string>
+    <string name="more">更多</string>
+    <string name="japanKoreanMovie">日韩动漫</string>
+    <string name="actionMovie">动作片</string>
+    <string name="chinaFun">大陆综艺</string>
+    <string name="chinaMovie">国产剧</string>
+    <string name="aiyoutengmang">爱优腾芒</string>
+    <string name="netflix">网飞</string>
+    <string name="reyingsudi">热映速递</string>
+    <string name="paihangbang">排行榜</string>
+    <string name="jijiangshangying">即将上映</string>
+    <string name="mianfeixiaoshuo">免费小说</string>
+    <string name="kanmanhua">看漫画</string>
+    <string name="tingyinyue">听音乐</string>
+    <string name="tingxiaoshuo">听小说</string>
+    <string name="fulizhongxin">福利中心</string>
+    <string name="loading">正在加载</string>
+
 </resources>

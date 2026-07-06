@@ -189,9 +189,9 @@ fun MyPullToRefreshBox(
             /**
              * 下拉过程中 Loading 动画的位置。
              */
-            val dragTranslationY = topLoadingOffset + (dragFraction * maxDragOffset)
-                .coerceAtMost(maxDragOffset)
-
+//            val dragTranslationY = topLoadingOffset + (dragFraction * maxDragOffset)
+//                .coerceAtMost(maxDragOffset)
+            val dragTranslationY = topLoadingOffset + dragFraction * maxDragOffset
             /**
              * 是否应该让 Loading 动画固定在顶部。
              *

@@ -27,12 +27,13 @@ fun MyApp() {
         NavDisplay(
             backStack = backStack,
             onBack = {
-                if (backStack.lastOrNull() == MainRoutes.Main) {
-                    // 这里可以直接退出 Activity，或者什么都不做
-                    backStack.removeLastOrNull()
-                } else if (backStack.size > 1) {
+                if (backStack.size > 1) {
                     backStack.removeLastOrNull()
                 }
+//                if (backStack.lastOrNull() == MainRoutes.Main) {
+//                    // 这里可以直接退出 Activity，或者什么都不做
+//                    backStack.removeLastOrNull()
+//                }
             },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),

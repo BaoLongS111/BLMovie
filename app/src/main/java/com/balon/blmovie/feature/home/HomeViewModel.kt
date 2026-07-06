@@ -1,10 +1,8 @@
 package com.balon.blmovie.feature.home
 
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.balon.blmovie.R
-import com.balon.blmovie.core.data.repository.MovieRepository
+import com.balon.blmovie.core.data.repository.HomeRepository
 import com.balon.blmovie.core.exception.CommonException
 import com.balon.blmovie.core.extension.asResult
 import com.balon.blmovie.core.model.LoadMoreState
@@ -16,9 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -30,7 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val homeRepository: HomeRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -59,21 +55,21 @@ class HomeViewModel @Inject constructor(
 
             // 创建异步任务
             val bannerJob = async {
-                movieRepository.banners().asResult().first()
+                homeRepository.banners().asResult().first()
             }
-            val categoryJob = async {
-                movieRepository.categories().asResult().first()
-            }
-            val japanKoreanMovieJob = async {
-                movieRepository.japanKoreanMovie(mapOf(
-                    "typeId" to "30","page" to "1","size" to "6"
-                )).asResult().first()
+            val homeDataJob = async { homeRepository.homeData().asResult().first() }
+            val articleListJob = async {
+                homeRepository.articleList(
+                    mapOf(
+                        "page" to "1", "size" to "20"
+                    )
+                ).asResult().first()
             }
 
             // 等待所有作业完成
             val bannerResult = bannerJob.await()
-            val categoryResult = categoryJob.await()
-            val japanKoreanMovieResult = japanKoreanMovieJob.await()
+            val homeDataResult = homeDataJob.await()
+            val articleListResult = articleListJob.await()
 
             // 最少要有1S的延迟
             val endTime = System.currentTimeMillis()
@@ -84,9 +80,10 @@ class HomeViewModel @Inject constructor(
                 delay(delayTimeMillis)
             }
 
-            if (bannerResult.isFailure || categoryResult.isFailure|| japanKoreanMovieResult.isFailure) {
+            if (bannerResult.isFailure || homeDataResult.isFailure || articleListResult.isFailure) {
                 //发生异常了，例如：网络错误，解析数据失败等
-                val throwable = bannerResult.exceptionOrNull() ?: categoryResult.exceptionOrNull()
+                val throwable = bannerResult.exceptionOrNull() ?: homeDataResult.exceptionOrNull()
+                ?: articleListResult.exceptionOrNull()
                 _uiState.update {
                     it.copy(
                         pageState = PageState.Error(
@@ -101,8 +98,8 @@ class HomeViewModel @Inject constructor(
 
             //判断业务是否请求成功
             val bannerResultData = bannerResult.getOrNull()!!
-            val categoryResultData = categoryResult.getOrNull()!!
-            val japanKoreanMovieResultData = japanKoreanMovieResult.getOrNull()!!
+            val homeResultData = homeDataResult.getOrNull()!!
+            val articleListResultData = articleListResult.getOrNull()!!
 
             if (!bannerResultData.isSucceed) {
                 //业务失败
@@ -116,12 +113,12 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            if (!categoryResultData.isSucceed) {
+            if (!homeResultData.isSucceed) {
                 //业务失败
                 _uiState.update {
                     it.copy(
                         pageState = PageState.Error(
-                            throwable = CommonException(categoryResultData)
+                            throwable = CommonException(homeResultData)
                         )
                     )
                 }
@@ -132,9 +129,9 @@ class HomeViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     pageState = PageState.Success,
-                    banners = bannerResultData.data?:emptyList(),
-                    categories = categoryResultData.data?:emptyList(),
-                    japanKoreanMovie = japanKoreanMovieResultData.data?.list?:emptyList(),
+                    banners = bannerResultData.data ?: emptyList(),
+                    homeData = homeResultData.data,
+                    articleList = articleListResultData.data?.list ?: emptyList(),
                     refreshState = RefreshState.IDLE,
                     loadMoreState = LoadMoreState.IDLE,
                 )
@@ -168,25 +165,22 @@ class HomeViewModel @Inject constructor(
 
             // 并行请求 banner 和 category
             val bannerJob = async {
-                movieRepository.banners()
+                homeRepository.banners()
                     .asResult()
                     .first()
             }
-            val categoryJob = async {
-                movieRepository.categories()
-                    .asResult()
-                    .first()
+            val homeDataJob = async { homeRepository.homeData().asResult().first() }
+            val articleListJob = async {
+                homeRepository.articleList(
+                    mapOf(
+                        "page" to "1", "size" to "20"
+                    )
+                ).asResult().first()
             }
-            val japanKoreanMovieJob = async {
-                movieRepository.japanKoreanMovie(mapOf(
-                    "typeId" to "30","page" to "1","size" to "6"
-                )).asResult().first()
-            }
-
 
             val bannerResult = bannerJob.await()
-            val categoryResult = categoryJob.await()
-            val japanKoreanMovieResult = japanKoreanMovieJob.await()
+            val homeDataResult = homeDataJob.await()
+            val articleListResult = articleListJob.await()
 
             // 最少显示一段刷新动画，避免刷新太快一闪而过
             val endTime = System.currentTimeMillis()
@@ -199,10 +193,10 @@ class HomeViewModel @Inject constructor(
             }
 
             // 只要有一个失败，就认为刷新失败
-            if (bannerResult.isFailure || categoryResult.isFailure||japanKoreanMovieResult.isFailure) {
+            if (bannerResult.isFailure || homeDataResult.isFailure || articleListResult.isFailure) {
                 val throwable =
                     bannerResult.exceptionOrNull()
-                        ?: categoryResult.exceptionOrNull()
+                        ?: homeDataResult.exceptionOrNull() ?: articleListResult.exceptionOrNull()
 
                 _uiState.update {
                     it.copy(
@@ -212,10 +206,11 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
             //都请求成功
+
             // 判断业务是否成功
             val bannerResultData = bannerResult.getOrNull()!!
-            val categoryResultData = categoryResult.getOrNull()!!
-            val japanKoreanMovieResultData = japanKoreanMovieResult.getOrNull()!!
+            val homeResultData = homeDataResult.getOrNull()!!
+            val articleListResultData = articleListResult.getOrNull()!!
 
             if (!bannerResultData.isSucceed) {
                 //业务失败
@@ -234,12 +229,12 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            if (!categoryResultData.isSucceed) {
+            if (!homeResultData.isSucceed) {
                 //业务失败
                 _uiState.update {
                     it.copy(
                         pageState = PageState.Error(
-                            throwable = CommonException(categoryResultData)
+                            throwable = CommonException(homeResultData)
                         )
                     )
                 }
@@ -249,8 +244,8 @@ class HomeViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     banners = bannerResultData.data ?: emptyList(),
-                    categories = categoryResultData.data ?: emptyList(),
-                    japanKoreanMovie = japanKoreanMovieResultData.data?.list?:emptyList(),
+                    homeData = homeResultData.data,
+                    articleList = articleListResultData.data?.list ?: emptyList(),
                     refreshState = RefreshState.SUCCESS,
                 )
             }
@@ -268,7 +263,8 @@ class HomeViewModel @Inject constructor(
 
 
     }
-     fun clearSuccess() {
+
+    fun clearSuccess() {
         _uiState.update {
             if (it.refreshState == RefreshState.SUCCESS) {
                 it.copy(
@@ -279,7 +275,8 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-     fun clearError() {
+
+    fun clearError() {
         _uiState.update {
             if (it.refreshState == RefreshState.ERROR) {
                 it.copy(

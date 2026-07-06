@@ -19,6 +19,8 @@ import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.feature.article.ArticleRoute
 import com.balon.blmovie.feature.category.CategoryRoute
 import com.balon.blmovie.feature.home.HomeRoute
+import com.balon.blmovie.feature.main.component.MyNavigationBar
+import com.balon.blmovie.feature.main.component.TopLevelDestination
 import com.balon.blmovie.feature.mine.MineRoute
 import com.balon.blmovie.feature.shortvideo.ShortVideoRoute
 import kotlinx.coroutines.launch

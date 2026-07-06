@@ -42,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,17 +75,27 @@ import com.balon.blmovie.core.design.component.MyPullToRefreshBox
 import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.design.theme.SpaceExtraMedium
 import com.balon.blmovie.core.design.theme.SpaceExtraMediumWidth
+import com.balon.blmovie.core.design.theme.SpaceExtraOuter2
+import com.balon.blmovie.core.design.theme.SpaceExtraSmall2
 import com.balon.blmovie.core.design.theme.SpaceLarge
 import com.balon.blmovie.core.design.theme.SpaceMedium
 import com.balon.blmovie.core.design.theme.SpaceMediumHeight
 import com.balon.blmovie.core.design.theme.SpaceMediumWidth
 import com.balon.blmovie.core.design.theme.SpaceOuter
 import com.balon.blmovie.core.design.theme.SpaceSmall
+import com.balon.blmovie.core.design.theme.SpaceSmallHeight
 import com.balon.blmovie.core.design.theme.SpaceSmallWidth
+import com.balon.blmovie.core.design.theme.smallTopRoundedCornerShape
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.RefreshState
 import com.balon.blmovie.core.model.response.Movie
+import com.balon.blmovie.feature.home.component.ActorSection
+import com.balon.blmovie.feature.home.component.ArticleSection
+import com.balon.blmovie.feature.home.component.FunctionData
+import com.balon.blmovie.feature.home.component.FunctionSection
+import com.balon.blmovie.feature.home.component.FunctionUnit
+import com.balon.blmovie.feature.home.component.HomeMovieSection
 import com.balon.blmovie.util.Constant
 import com.hjq.toast.Toaster
 import com.quick.app.core.extension.clickableNoRipple
@@ -119,7 +130,7 @@ fun HomeRoute(
         if (uiState.refreshState == RefreshState.SUCCESS) {
 
             Toaster.show(successMessage)
-            viewModel.clearError()
+            viewModel.clearSuccess()
         }
     }
     HomeScreen(
@@ -141,12 +152,19 @@ fun HomeScreen(
     onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onRetry: () -> Unit = {},
+    onMovieClick: (Movie) -> Unit = {}
 ) {
     val pageState = uiState.pageState
     val banners = uiState.banners
-    val japanKoreanMovies = uiState.japanKoreanMovie
+    val japanKoreanMovies = uiState.homeData?.japanKoreanMovie ?: emptyList()  // 日韩动漫
+    val actionMovies = uiState.homeData?.actionMovie ?: emptyList()     // 动作片
+    val chinaFun = uiState.homeData?.chinaFun ?: emptyList()     // 大陆综艺
+    val chinaMovie = uiState.homeData?.chinaMovie ?: emptyList()     // 国产剧
+    val actorList = uiState.homeData?.actor ?: emptyList()   // 演员列表
+    val articleList = uiState.articleList ?: emptyList()  // 文章列表
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
         topBar = {
             MyHomeAppBar(
                 sharedTransitionScope = sharedTransitionScope,
@@ -182,7 +200,46 @@ fun HomeScreen(
                     LazyColumn() {
                         // 轮播图
                         item { Banners(banners = banners) }
-                        item { HomeMovieSection(japanKoreanMovies = japanKoreanMovies) }
+                        item { FunctionSection(FunctionData.entries) }
+                        item {
+                            HomeMovieSection(
+                                title = stringResource(R.string.japanKoreanMovie),
+                                movies = japanKoreanMovies,
+                                columnCount = 3,
+                                onMovieClick = onMovieClick
+                            )
+                        }
+                        item { SpaceSmallHeight() }
+                        item {
+                            HomeMovieSection(
+                                title = stringResource(R.string.actionMovie),
+                                movies = actionMovies,
+                                columnCount = 3,
+                                onMovieClick = onMovieClick
+                            )
+                        }
+                        item { SpaceSmallHeight() }
+                        item {
+                            HomeMovieSection(
+                                title = stringResource(R.string.chinaFun),
+                                movies = chinaFun,
+                                columnCount = 3,
+                                onMovieClick = onMovieClick
+                            )
+                        }
+                        item { SpaceSmallHeight() }
+                        item {
+                            HomeMovieSection(
+                                title = stringResource(R.string.chinaMovie),
+                                movies = chinaMovie,
+                                columnCount = 3,
+                                onMovieClick = onMovieClick
+                            )
+                        }
+                        item { SpaceSmallHeight() }
+                        item { ActorSection(actors = actorList) }  // 演员
+                        item { SpaceSmallHeight() }
+                        item { ArticleSection(articles = articleList) }  // 文章
 //                        item { LoadMoreFooter(loadMoreState = uiState.loadMoreState) }
 
                     }
@@ -195,184 +252,8 @@ fun HomeScreen(
 }
 
 /**
- *  {
- *         "dt": "lzm3u8",
- *         "lastTime": "2026-07-04T13:14:55",
- *         "name": "天命动漫",
- *         "note": "更新至第09集",
- *         "pic": "https://img.lzipic.com/upload/vod/20260615-1/6c2192cbe89816cd652381dead9d219b.jpg",
- *         "tid": 52,
- *         "typeName": "AI漫剧",
- *         "vodId": 141341
- *       }
+ * 加载更多
  */
-@Composable
-fun HomeMovieSection(
-    japanKoreanMovies:List<Movie>
-){
-    Column(
-        modifier = Modifier.fillMaxWidth()
-            .padding(SpaceSmall)
-    ){
-        SectionHeader()
-        SpaceMediumHeight()
-        MovieGrid(movies = japanKoreanMovies)
-    }
-
-}
-
-@Composable
-fun MovieGrid(
-    movies: List<Movie>,
-    modifier: Modifier = Modifier,
-    columnCount: Int = 3,
-    onMovieClick: (Movie) -> Unit = {}
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SpaceMedium)
-    ) {
-        movies.chunked(columnCount).forEach { rowMovies ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SpaceMedium)
-            ) {
-                rowMovies.forEach { movie ->
-                    MovieCard(
-                        movie = movie,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            onMovieClick(movie)
-                        }
-                    )
-                }
-
-                val emptyCount = columnCount - rowMovies.size
-
-                repeat(emptyCount) {
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MovieCard(
-    movie: Movie,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    ElevatedCard(
-        modifier = modifier
-            .clip(RoundedCornerShape(SpaceMedium))
-            .clickable { onClick() },
-        shape = RoundedCornerShape(SpaceMedium),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(0.72f)
-            ) {
-                AsyncImage(
-                    model = movie.pic,
-                    contentDescription = movie.name,
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.placeholder),
-                    modifier = Modifier.fillMaxSize()
-                )
-                // 图片底部加一个 黑色渐变遮罩层
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .fillMaxWidth()
-                        .height(45.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.75f)
-                                )
-                            )
-                        )
-                )
-
-                Text(
-                    text = movie.note.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal = 8.dp, vertical = 7.dp)
-                )
-            }
-
-            Text(
-                text = movie.name.orEmpty(),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = SpaceExtraMedium, vertical = SpaceExtraMedium)
-            )
-        }
-    }
-}
-
-@Composable
-fun SectionHeader(){
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ){
-        Box(
-            modifier = Modifier
-                .width(SpaceSmall)
-                .height(22.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        SpaceExtraMediumWidth()
-        Text(
-            text = "日韩动漫",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f)
-        )
-
-        Row(
-            modifier = Modifier.clickable {  },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "更多",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
-
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline
-            )
-        }
-    }
-}
-
 @Composable
 fun LoadMoreFooter(
     loadMoreState: LoadMoreState
@@ -401,6 +282,9 @@ fun LoadMoreFooter(
     }
 }
 
+/**
+ * 轮播图
+ */
 @Composable
 fun Banners(
     banners: List<Movie>,
@@ -513,6 +397,9 @@ fun Banners(
 }
 
 
+/**
+ * 标题栏
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyHomeAppBar(
@@ -541,6 +428,9 @@ fun MyHomeAppBar(
 
 
     TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         navigationIcon = {
             Image(
                 painter = painterResource(R.drawable.ic_splash_logo),
@@ -556,7 +446,7 @@ fun MyHomeAppBar(
                     .fillMaxWidth()
                     .height(38.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(MaterialTheme.colorScheme.background)
                     .clickable {
 
                     }

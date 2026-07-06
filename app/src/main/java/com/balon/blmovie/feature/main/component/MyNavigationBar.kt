@@ -1,4 +1,4 @@
-package com.balon.blmovie.feature.main
+package com.balon.blmovie.feature.main.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

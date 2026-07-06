@@ -17,6 +17,7 @@ val Space3XLarge = 30.dp
 val SpaceLarge = 20.dp
 val SpaceOuter = 16.dp
 val SpaceExtraOuter = 14.dp
+val SpaceExtraOuter2 = 12.dp
 val SpaceMedium = 10.dp
 val SpaceExtraMedium = 7.dp
 val SpaceSmall = 5.dp

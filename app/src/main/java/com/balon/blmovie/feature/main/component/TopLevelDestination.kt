@@ -1,4 +1,4 @@
-package com.balon.blmovie.feature.main
+package com.balon.blmovie.feature.main.component
 
 import com.balon.blmovie.R
 

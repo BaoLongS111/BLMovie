@@ -17,7 +17,7 @@ val myShapes = Shapes(
 
 //左上，右上圆角
 val extraSmallTopRoundedCornerShape = RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)
-val smallTopRoundedCornerShape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+val smallTopRoundedCornerShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
 
 // 左上，左下圆角（开始圆角）
 val largeStartRoundedCornerShape = RoundedCornerShape(

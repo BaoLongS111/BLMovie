@@ -23,6 +23,7 @@ object MainRoutes {
  * 跳转到Main
  */
 fun NavBackStack<NavKey>.navigateToMain(){
+    clear()
     add(MainRoutes.Main)
 }
 
