@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
-import android.graphics.Color
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -37,7 +36,7 @@ fun PlayerFullScreenEffect(
         val currentActivity = activity ?: return@LaunchedEffect
 
         if (targetFullScreen) {
-            // 关键：先隐藏状态栏，再请求横屏
+            // 先隐藏状态栏，再请求横屏
             currentActivity.prepareEnterPlayerFullScreen()
 
             currentActivity.requestedOrientation =
@@ -73,21 +72,50 @@ fun PlayerFullScreenEffect(
     DisposableEffect(activity) {
         onDispose {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            activity?.applyPlayerPortraitBars()
+
+            // 离开视频详情页时，只恢复系统栏显示和布局方式。
+            // 不修改状态栏颜色，也不修改状态栏图标颜色，避免影响首页。
+            activity?.applyAppDefaultBars()
         }
+    }
+}
+
+/**
+ * 回到 App 普通页面时的系统栏状态。
+ *
+ * 这里只做三件事：
+ * 1. 内容不要绘制到系统栏下面。
+ * 2. 显示状态栏和导航栏。
+ * 3. 清理全屏相关 flag。
+ *
+ * 注意：这里不改状态栏颜色，也不改状态栏图标颜色。
+ */
+private fun Activity.applyAppDefaultBars() {
+    WindowCompat.setDecorFitsSystemWindows(window, true)
+
+    window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+
+    val controller = WindowInsetsControllerCompat(window, window.decorView)
+    controller.show(WindowInsetsCompat.Type.systemBars())
+
+    window.decorView.post {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+
+        val newController = WindowInsetsControllerCompat(window, window.decorView)
+        newController.show(WindowInsetsCompat.Type.systemBars())
     }
 }
 
 /**
  * 点击全屏后立刻执行。
  *
- * 目的是避免第一次横屏时，系统状态栏短暂显示成黑条。
+ * 目的是避免第一次横屏时，系统状态栏短暂显示出来。
+ *
+ * 注意：这里不修改状态栏颜色。
  */
 private fun Activity.prepareEnterPlayerFullScreen() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
-
-    window.statusBarColor = Color.TRANSPARENT
-    window.navigationBarColor = Color.TRANSPARENT
 
     val controller = WindowInsetsControllerCompat(window, window.decorView)
 
@@ -108,12 +136,11 @@ private fun Activity.prepareEnterPlayerFullScreen() {
 
 /**
  * 横屏全屏状态。
+ *
+ * 注意：这里不修改状态栏颜色。
  */
 private fun Activity.applyPlayerLandscapeBars() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
-
-    window.statusBarColor = Color.TRANSPARENT
-    window.navigationBarColor = Color.TRANSPARENT
 
     val controller = WindowInsetsControllerCompat(window, window.decorView)
 
@@ -127,6 +154,8 @@ private fun Activity.applyPlayerLandscapeBars() {
  * 竖屏普通状态。
  *
  * 状态栏显示，视频内容从状态栏下面开始。
+ *
+ * 注意：这里不修改状态栏颜色，也不修改状态栏图标颜色。
  */
 private fun Activity.applyPlayerPortraitBars() {
     WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -134,16 +163,9 @@ private fun Activity.applyPlayerPortraitBars() {
     window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
 
-    window.statusBarColor = Color.BLACK
-    window.navigationBarColor = Color.BLACK
-
     val controller = WindowInsetsControllerCompat(window, window.decorView)
 
     controller.show(WindowInsetsCompat.Type.systemBars())
-
-    // 黑色状态栏使用白色图标
-    controller.isAppearanceLightStatusBars = false
-    controller.isAppearanceLightNavigationBars = false
 
     // 下一帧再恢复一次，防止横竖屏切换覆盖 show
     window.decorView.post {
@@ -151,8 +173,6 @@ private fun Activity.applyPlayerPortraitBars() {
 
         val newController = WindowInsetsControllerCompat(window, window.decorView)
         newController.show(WindowInsetsCompat.Type.systemBars())
-        newController.isAppearanceLightStatusBars = false
-        newController.isAppearanceLightNavigationBars = false
     }
 }
 

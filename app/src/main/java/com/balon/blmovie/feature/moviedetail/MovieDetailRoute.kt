@@ -2,58 +2,97 @@ package com.balon.blmovie.feature.moviedetail
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balon.blmovie.core.design.component.DelayedLoadingScreen
+import com.balon.blmovie.core.design.component.MyErrorScreen
+import com.balon.blmovie.core.design.component.MyLoadingScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
+import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.extension.parsePlayEpisodes
+import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.PlayEpisode
-import com.balon.blmovie.core.model.response.Movie
-import com.balon.blmovie.feature.moviedetail.component.CurrentPlayUrlSection
 import com.balon.blmovie.feature.moviedetail.component.EpisodeSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
+import com.balon.blmovie.feature.moviedetail.component.MovieDetailData
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
+import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailNavigation
+import kotlinx.coroutines.launch
 
 @Composable
 fun MovieDetailRoute(
-    movieId: Long,
-    viewModel: MovieDetailViewModel = hiltViewModel(),
-    onBack: () -> Unit
+    navKey: MovieDetailNavigation.MovieDetail,
+    onBack: () -> Unit,
+    onHomeClick: () -> Unit,
 ) {
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-
-    MovieDetailScreen(
-        uiState = uiState
+    val viewModel = hiltViewModel<MovieDetailViewModel, MovieDetailViewModel.Factory>(
+        creationCallback = { factory ->
+            factory.create(navKey)
+        }
     )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pageState = uiState.pageState
 
-    LaunchedEffect(key1 = movieId) {
-        viewModel.loadMovieDetail(movieId)
+    when (pageState) {
+        is PageState.Loading -> {
+            DelayedLoadingScreen()
+        }
+
+        is PageState.Success -> {
+            MovieDetailScreen(
+                uiState = uiState,
+                onBackClick = onBack,
+                onHomeClick = onHomeClick
+            )
+        }
+
+        is PageState.Error -> {
+            MyErrorScreen(
+                throwable = pageState.throwable,
+                onRetryClick = viewModel::onRetry
+            )
+        }
     }
+
 }
 
 @Composable
@@ -67,6 +106,11 @@ fun MovieDetailScreen(
     val episodes: List<PlayEpisode> = remember(movie.playUrl) {
         movie.playUrl.parsePlayEpisodes()
     }
+
+    var isLeavingPage by remember {
+        mutableStateOf(false)
+    }
+
 
     /**
      * 点全屏
@@ -123,12 +167,11 @@ fun MovieDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .statusBarsPadding()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+            modifier = Modifier.fillMaxSize()
         ) {
             MyVideoPlayer(
                 url = currentEpisode?.url.orEmpty(),
@@ -149,6 +192,8 @@ fun MovieDetailScreen(
 
                 // 切换过程中隐藏控制栏。
                 isFullScreenChanging = isFullScreenChanging,
+                // 是否正在退出页面，暂停播放器
+                isLeavingPage = isLeavingPage,
 
                 onFullScreenClick = {
                     targetFullScreen = !targetFullScreen
@@ -157,6 +202,7 @@ fun MovieDetailScreen(
                     if (targetFullScreen || currentFullScreen) {
                         targetFullScreen = false
                     } else {
+                        isLeavingPage = true
                         onBackClick()
                     }
                 },
@@ -177,45 +223,168 @@ fun MovieDetailScreen(
             )
 
             if (!currentFullScreen) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    item {
-                        MovieDetailTabRow()
-                    }
 
-                    item {
-                        MovieInfoHeader(
-                            title = movie.name.orEmpty(),
-                            note = movie.note.orEmpty()
-                        )
+                val pagerState = rememberPagerState(
+                    initialPage = 0,
+                    pageCount = {
+                        2
                     }
+                )
 
-                    item {
-                        EpisodeSection(
-                            episodes = episodes,
-                            currentEpisode = currentEpisode,
-                            onEpisodeClick = { episode ->
-                                currentEpisode = episode
+                val coroutineScope = rememberCoroutineScope()
+
+                var showDanmakuInput by remember {
+                    mutableStateOf(false)
+                }
+
+                MovieDetailTabRow(
+                    selectedIndex = pagerState.currentPage,
+                    commentCount = 2393,
+                    onTabClick = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    onDanmakuClick = {
+                        showDanmakuInput = true
+                    }
+                )
+
+                HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
+                    when (page) {
+                        0 -> {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                item {
+                                    MovieInfoHeader(
+                                        title = movie.name.orEmpty(),
+                                        note = movie.note.orEmpty()
+                                    )
+                                }
+
+                                item {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = SpaceSmall),
+
+                                        ) {
+                                        MovieDetailData.entries.forEach { it ->
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Image(
+                                                    painter = painterResource(it.icon),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                                Text(
+                                                    text = it.text.toString(),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+
+
+                                }
+
+                                item {
+                                    EpisodeSection(
+                                        episodes = episodes,
+                                        currentEpisode = currentEpisode,
+                                        onEpisodeClick = { episode ->
+                                            currentEpisode = episode
+                                        }
+                                    )
+                                }
+
+                                item {
+                                    MovieDescriptionSection(
+                                        description = movie.description.orEmpty()
+                                    )
+                                }
                             }
-                        )
-                    }
+                        }
 
-                    item {
-                        CurrentPlayUrlSection(
-                            currentEpisode = currentEpisode
-                        )
-                    }
-
-                    item {
-                        MovieDescriptionSection(
-                            description = movie.description.orEmpty()
-                        )
+                        1 -> {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                item {
+                                    Text(
+                                        text = "这里显示评论列表",
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
+
+                if (showDanmakuInput) {
+                    DanmakuInputDialog(
+                        onDismiss = {
+                            showDanmakuInput = false
+                        },
+                        onSendClick = { text ->
+                            showDanmakuInput = false
+                            // TODO 这里调用 viewModel 发送弹幕
+                        }
+                    )
+                }
+
             }
         }
+
     }
+
+}
+
+@Composable
+private fun DanmakuInputDialog(
+    onDismiss: () -> Unit,
+    onSendClick: (String) -> Unit
+) {
+    var text by remember {
+        mutableStateOf("")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("发送弹幕")
+        },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = {
+                    text = it
+                },
+                placeholder = {
+                    Text("输入弹幕内容")
+                },
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (text.isNotBlank()) {
+                        onSendClick(text)
+                    }
+                }
+            ) {
+                Text("发送")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("取消")
+            }
+        }
+    )
 }
 
 @Preview

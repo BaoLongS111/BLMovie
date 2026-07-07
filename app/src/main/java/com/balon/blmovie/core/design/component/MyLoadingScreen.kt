@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,6 +25,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.balon.blmovie.R
 import com.balon.blmovie.core.design.theme.BLMovieTheme
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun MyLoadingScreen(
@@ -56,6 +61,24 @@ fun MyLoadingScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
+    }
+}
+
+@Composable
+fun DelayedLoadingScreen(
+    delayMillis: Long = 200L
+) {
+    var showLoading by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(delayMillis.milliseconds)
+        showLoading = true
+    }
+
+    if (showLoading) {
+        MyLoadingScreen()
     }
 }
 

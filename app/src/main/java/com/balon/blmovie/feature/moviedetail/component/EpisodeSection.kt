@@ -11,12 +11,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.balon.blmovie.R
 import com.balon.blmovie.core.model.PlayEpisode
 
 @Composable
@@ -31,12 +34,12 @@ fun EpisodeSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF151515))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
-            text = "播放列表",
-            color = Color.White,
+            text = stringResource(R.string.play_list),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
 
@@ -54,11 +57,11 @@ fun EpisodeSection(
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selected) {
-                            Color(0xFFFF4F9A)
+                            MaterialTheme.colorScheme.primary
                         } else {
-                            Color(0xFF2A2A2A)
+                            MaterialTheme.colorScheme.background
                         },
-                        contentColor = Color.White
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(

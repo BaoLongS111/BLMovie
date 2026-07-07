@@ -15,11 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Fullscreen
@@ -138,7 +138,7 @@ fun MyVideoPlayer(
      * 等切换完成后，再显示新的控制栏 UI。
      */
     isFullScreenChanging: Boolean = false,
-
+    isLeavingPage: Boolean = false,
     /**
      * 点击全屏按钮。
      */
@@ -160,7 +160,7 @@ fun MyVideoPlayer(
      */
     onMoreClick: () -> Unit = {},
 
-) {
+    ) {
 
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -242,6 +242,13 @@ fun MyVideoPlayer(
             controlsVisible = false
         } else {
             controlsVisible = true
+        }
+    }
+
+    LaunchedEffect(isLeavingPage) {
+        if (isLeavingPage) {
+            exoPlayer.pause()
+            exoPlayer.clearVideoSurface()
         }
     }
 
@@ -465,7 +472,7 @@ fun MyVideoPlayer(
                 exoPlayer.currentPosition.coerceAtLeast(0L)
             }
 
-            delay(500L)
+            delay(500L.milliseconds)
         }
     }
 
@@ -912,14 +919,14 @@ private fun TopPlayerBar(
             modifier = Modifier.size(24.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.Default.ArrowBackIosNew,
                 contentDescription = "返回",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
         }
 
-        if (!isFullScreen){
+        if (!isFullScreen) {
             SpaceSmallWidth()
             IconButton(
                 onClick = onHomeClick,

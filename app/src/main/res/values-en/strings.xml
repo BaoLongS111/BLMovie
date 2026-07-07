@@ -30,5 +30,8 @@
     <string name="tingxiaoshuo">Listening Novel</string>
     <string name="fulizhongxin">Welfare</string>
     <string name="loading">Loading</string>
-
+    <string name="introduction">Introduction</string>
+    <string name="barrage_message">Send Barrage Messages</string>
+    <string name="play_list">Play List</string>
+    <string name="plot_summary">Plot Summary</string>
 </resources>

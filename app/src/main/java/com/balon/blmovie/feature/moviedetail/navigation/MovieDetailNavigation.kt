@@ -14,13 +14,13 @@ object MovieDetailNavigation {
     @Serializable
     data class MovieDetail(
         val movieId: Long
-    ): NavKey
+    ) : NavKey
 }
 
 /**
  * 跳转到影视页
  */
-fun NavBackStack<NavKey>.navigateToMovieDetail(movieId:Long){
+fun NavBackStack<NavKey>.navigateToMovieDetail(movieId: Long) {
     add(
         MovieDetailNavigation.MovieDetail(movieId = movieId)
     )
@@ -30,12 +30,14 @@ fun NavBackStack<NavKey>.navigateToMovieDetail(movieId:Long){
  * 注册影视页
  */
 fun EntryProviderScope<NavKey>.movieDetailScreen(
-    onBack:()-> Unit
-){
-    entry<MovieDetailNavigation.MovieDetail>{ key->
+    onBack: () -> Unit,
+    onHomeClick: () -> Unit
+) {
+    entry<MovieDetailNavigation.MovieDetail> { key ->
         MovieDetailRoute(
-            movieId = key.movieId,
-            onBack = onBack
+            navKey = key,
+            onBack = onBack,
+            onHomeClick = onHomeClick
         )
     }
 }

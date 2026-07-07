@@ -22,12 +22,12 @@ fun MovieInfoHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF151515))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
             text = title,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             maxLines = 2,
@@ -37,7 +37,7 @@ fun MovieInfoHeader(
         if (note.isNotBlank()) {
             Text(
                 text = note,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.outline,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 6.dp)
             )

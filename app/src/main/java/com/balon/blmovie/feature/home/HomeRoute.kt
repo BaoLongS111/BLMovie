@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.balon.blmovie.R
+import com.balon.blmovie.core.design.component.DelayedLoadingScreen
 import com.balon.blmovie.core.design.component.MyErrorScreen
 import com.balon.blmovie.core.design.component.MyLoadingScreen
 import com.balon.blmovie.core.design.component.MyPullToRefreshBox
@@ -181,7 +182,7 @@ fun HomeScreen(
     ) { paddingValues ->
         when (pageState) {
             is PageState.Loading -> {
-                MyLoadingScreen()
+                DelayedLoadingScreen()
             }
 
             is PageState.Error -> {

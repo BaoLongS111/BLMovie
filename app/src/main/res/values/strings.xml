@@ -29,5 +29,10 @@
     <string name="tingxiaoshuo">听小说</string>
     <string name="fulizhongxin">福利中心</string>
     <string name="loading">正在加载</string>
+    <string name="introduction">简介</string>
+    <string name="barrage_message">点我发弹幕</string>
+    <string name="play_list">播放列表</string>
+    <string name="plot_summary">剧情简介</string>
+
 
 </resources>

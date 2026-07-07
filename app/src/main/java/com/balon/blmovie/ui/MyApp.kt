@@ -3,6 +3,12 @@ package com.balon.blmovie.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -58,7 +64,52 @@ fun MyApp() {
                     }
                 )
                 movieDetailScreen(
-                    onBack = { backStack.removeLastOrNull() }
+                    onBack = { backStack.removeLastOrNull() },
+                    onHomeClick = backStack::navigateToMain
+                )
+            },
+            // 正向进入，比如从首页进入详情页
+            transitionSpec = {
+                slideInHorizontally(
+                    animationSpec = tween(260),
+                    initialOffsetX = { fullWidth -> fullWidth }
+                ) + fadeIn(
+                    animationSpec = tween(260)
+                ) togetherWith slideOutHorizontally(
+                    animationSpec = tween(260),
+                    targetOffsetX = { fullWidth -> -fullWidth / 4 }
+                ) + fadeOut(
+                    animationSpec = tween(180)
+                )
+            },
+
+            // 返回退出，比如从详情页返回首页
+            popTransitionSpec = {
+                slideInHorizontally(
+                    animationSpec = tween(260),
+                    initialOffsetX = { fullWidth -> -fullWidth / 4 }
+                ) + fadeIn(
+                    animationSpec = tween(260)
+                ) togetherWith slideOutHorizontally(
+                    animationSpec = tween(260),
+                    targetOffsetX = { fullWidth -> fullWidth }
+                ) + fadeOut(
+                    animationSpec = tween(180)
+                )
+            },
+
+            // 手势返回的时候也用同一套
+            predictivePopTransitionSpec = {
+                slideInHorizontally(
+                    animationSpec = tween(260),
+                    initialOffsetX = { fullWidth -> -fullWidth / 4 }
+                ) + fadeIn(
+                    animationSpec = tween(260)
+                ) togetherWith slideOutHorizontally(
+                    animationSpec = tween(260),
+                    targetOffsetX = { fullWidth -> fullWidth }
+                ) + fadeOut(
+                    animationSpec = tween(180)
                 )
             }
         )
