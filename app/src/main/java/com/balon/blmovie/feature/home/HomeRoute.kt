@@ -199,7 +199,7 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    LazyColumn() {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
                         // 轮播图
                         item { Banners(banners = banners) }
                         item { FunctionSection(FunctionData.entries) }
