@@ -1,5 +1,8 @@
 package com.balon.blmovie.feature.moviedetail
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -27,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -42,9 +46,11 @@ import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.moviedetail.component.DetailFunctionSection
 import com.balon.blmovie.feature.moviedetail.component.EpisodeSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
+import com.balon.blmovie.feature.moviedetail.component.MovieDetailSkeletonScreen
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
+import com.balon.blmovie.feature.moviedetail.component.prepareEnterPlayerFullScreen
 import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailRoutes
 import kotlinx.coroutines.launch
 
@@ -65,7 +71,9 @@ fun MovieDetailRoute(
 
     when (pageState) {
         is PageState.Loading -> {
-            DelayedLoadingScreen()
+            MovieDetailSkeletonScreen(
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         is PageState.Success -> {
@@ -102,6 +110,11 @@ fun MovieDetailScreen(
         mutableStateOf(false)
     }
 
+    val context = LocalContext.current
+
+    val activity = remember(context) {
+        context.findActivity()
+    }
 
     /**
      * 点全屏
@@ -187,6 +200,10 @@ fun MovieDetailScreen(
                 isLeavingPage = isLeavingPage,
 
                 onFullScreenClick = {
+                    if (!targetFullScreen) {
+                        activity?.prepareEnterPlayerFullScreen()
+                    }
+
                     targetFullScreen = !targetFullScreen
                 },
                 onBackClick = {
@@ -389,5 +406,13 @@ private fun DanmakuInputDialog(
 fun MovieDetailScreenPreview() {
     BLMovieTheme() {
         MovieDetailScreen(MovieDetailUiState())
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
     }
 }

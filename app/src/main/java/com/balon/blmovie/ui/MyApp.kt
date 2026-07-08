@@ -22,6 +22,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.balon.blmovie.feature.main.navigation.MainRoutes
 import com.balon.blmovie.feature.main.navigation.mainScreen
 import com.balon.blmovie.feature.main.navigation.navigateToMain
+import com.balon.blmovie.feature.movieadultdetail.navigation.movieAdultDetailScreen
+import com.balon.blmovie.feature.movieadultdetail.navigation.navigateToMovieAdultDetail
 import com.balon.blmovie.feature.moviedetail.navigation.movieDetailScreen
 import com.balon.blmovie.feature.moviedetail.navigation.navigateToMovieDetail
 import com.balon.blmovie.feature.search.navigation.navigateToSearch
@@ -73,9 +75,19 @@ fun MyApp() {
                     onBack = { backStack.removeLastOrNull() },
                     onHomeClick = backStack::navigateToMain
                 )
+
+                movieAdultDetailScreen(
+                    onBack = { backStack.removeLastOrNull() },
+                    onHomeClick = backStack::navigateToMain
+                )
                 searchScreen(
                     onBack = { backStack.removeLastOrNull() },
-                    onSearch = {}
+                    onMovieItemClick = { it->
+                        backStack.navigateToMovieDetail(it.vodId)
+                    },
+                    onMovieAdultItemClick = {it->
+                        backStack.navigateToMovieAdultDetail(it.vodId)
+                    }
                 )
 
             },
@@ -105,12 +117,6 @@ fun MyApp() {
                         targetContentZIndex = -1f
                     }
             },
-
-            // 手势返回的时候也用同一套
-            predictivePopTransitionSpec = {
-                // 不做预测返回预览动画
-                EnterTransition.None togetherWith ExitTransition.None
-            }
         )
     }
 }

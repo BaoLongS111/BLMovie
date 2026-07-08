@@ -3,6 +3,8 @@ package com.balon.blmovie.core.network.apiservice
 import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.HomeData
+import com.balon.blmovie.core.model.MovieAdult
+import com.balon.blmovie.core.model.MovieAdultDetail
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -71,5 +73,23 @@ interface MyNetworkApiService {
     suspend fun movieDetail(
         @Path("movieId") movieId: Long
     ): NetworkResponse<Movie>
+
+    @GET("api/v1/videos/search")
+    suspend fun searchMovie(
+        @QueryMap data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<Movie>>
+
+    /**
+     * 获取影视Adult详情
+     */
+    @GET("api/v1/videos2/{movieAdultId}")
+    suspend fun movieAdultDetail(
+        @Path("movieAdultId") movieAdultId: Long
+    ): NetworkResponse<MovieAdultDetail>
+
+    @GET("api/v1/videos2/search")
+    suspend fun searchMovieAdult(
+        @QueryMap data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<MovieAdult>>
 
 }

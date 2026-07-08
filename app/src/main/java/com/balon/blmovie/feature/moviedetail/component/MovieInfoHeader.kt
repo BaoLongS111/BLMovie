@@ -37,7 +37,7 @@ fun MovieInfoHeader(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember {
-        mutableStateOf(false)
+        mutableStateOf(true)
     }
 
 

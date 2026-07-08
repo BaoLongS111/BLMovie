@@ -7,15 +7,21 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -69,10 +75,16 @@ import kotlin.time.Duration.Companion.milliseconds
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.balon.blmovie.core.design.theme.SpaceMedium
+import com.balon.blmovie.core.design.theme.SpaceMediumHeight
 
 private const val SEEK_STEP_MS = 30_000L
 private const val CONTROLS_AUTO_HIDE_TIME = 3_000L
 private const val SEEK_HINT_SHOW_TIME = 1000L
+
+private val PlayerControlHorizontalPadding = 8.dp
+private val PlayerIconButtonSize = 36.dp
+private val PlayerIconSize = 24.dp
 
 /**
  * 横向滑动一整个播放器宽度时，最多快进 / 快退视频总时长的 50%。
@@ -840,7 +852,7 @@ private fun PlayerControlsOverlay(
             onBackClick = onBackClick,
             onHomeClick = onHomeClick,
             onMoreClick = onMoreClick,
-            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
 
         /**
@@ -894,6 +906,7 @@ private fun PlayerControlsOverlay(
  * 普通模式不显示标题。
  * 全屏模式才显示标题。
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TopPlayerBar(
     title: String?,
@@ -914,32 +927,39 @@ private fun TopPlayerBar(
                     )
                 )
             )
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+
+            .padding(
+                start = PlayerControlHorizontalPadding,
+                end = PlayerControlHorizontalPadding,
+                top = if (isFullScreen) 8.dp else 4.dp,
+                bottom = 4.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
             onClick = onBackClick,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(PlayerIconButtonSize)
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBackIos,
                 contentDescription = "返回",
                 tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(PlayerIconSize)
             )
         }
 
         if (!isFullScreen) {
             SpaceSmallWidth()
+
             IconButton(
                 onClick = onHomeClick,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(PlayerIconButtonSize)
             ) {
                 Icon(
                     imageVector = Icons.Default.Doorbell,
                     contentDescription = "主页",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(PlayerIconSize)
                 )
             }
         }
@@ -960,13 +980,13 @@ private fun TopPlayerBar(
 
         IconButton(
             onClick = onMoreClick,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(PlayerIconButtonSize)
         ) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "更多",
                 tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(PlayerIconSize)
             )
         }
     }
@@ -1010,11 +1030,15 @@ private fun BottomPlayerBar(
                     )
                 )
             )
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .padding(
+                horizontal = PlayerControlHorizontalPadding,
+                vertical = 6.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = onPlayPauseClick
+            onClick = onPlayPauseClick,
+            modifier = Modifier.size(PlayerIconButtonSize)
         ) {
             Icon(
                 imageVector = if (isPlaying) {
@@ -1023,13 +1047,15 @@ private fun BottomPlayerBar(
                     Icons.Default.PlayArrow
                 },
                 contentDescription = "播放暂停",
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(PlayerIconSize)
             )
         }
 
         Text(
             text = formatPlayerTime(currentPosition),
-            color = Color.White
+            color = Color.White,
+            modifier = Modifier.padding(start = 4.dp)
         )
 
         PlayerProgressBar(
@@ -1039,12 +1065,13 @@ private fun BottomPlayerBar(
             onValueChangeFinished = onSliderValueChangeFinished,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 6.dp)
         )
 
         Text(
             text = formatPlayerTime(duration),
-            color = Color.White
+            color = Color.White,
+            modifier = Modifier.padding(end = 4.dp)
         )
 
         if (isFullScreen) {
@@ -1070,7 +1097,8 @@ private fun BottomPlayerBar(
         }
 
         IconButton(
-            onClick = onFullScreenClick
+            onClick = onFullScreenClick,
+            modifier = Modifier.size(PlayerIconButtonSize)
         ) {
             Icon(
                 imageVector = if (isFullScreen) {
@@ -1079,7 +1107,8 @@ private fun BottomPlayerBar(
                     Icons.Default.Fullscreen
                 },
                 contentDescription = "全屏",
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(PlayerIconSize)
             )
         }
     }

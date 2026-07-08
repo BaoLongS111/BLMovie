@@ -1,5 +1,6 @@
 package com.balon.blmovie.core.data.repository
 
+import com.balon.blmovie.core.model.MovieAdultDetail
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkResponse
 import com.balon.blmovie.core.network.datasource.MyNetworkDatasource
@@ -23,6 +24,15 @@ class MovieDetailRepository @Inject constructor(
         movieId: Long
     ):Flow<NetworkResponse<Movie>> = flow{
         emit(networkDatasource.movieDetail(movieId = movieId))
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * 视频Adult详情
+     */
+    fun movieAdultDetail(
+        movieAdultId: Long
+    ):Flow<NetworkResponse<MovieAdultDetail>> = flow{
+        emit(networkDatasource.movieAdultDetail(movieAdultId = movieAdultId))
     }.flowOn(Dispatchers.IO)
 
 }
