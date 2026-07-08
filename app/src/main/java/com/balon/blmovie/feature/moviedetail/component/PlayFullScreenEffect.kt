@@ -27,92 +27,76 @@ fun PlayerFullScreenEffect(
     }
 
     /**
-     * targetFullScreen 是用户想要的状态。
-     *
+     * targetFullScreen 表示用户想要进入还是退出全屏。
      * 这里主要负责请求横竖屏。
-     * 进入全屏时，先提前隐藏系统栏，避免第一次横屏出现黑色状态栏。
      */
     LaunchedEffect(targetFullScreen, activity) {
         val currentActivity = activity ?: return@LaunchedEffect
 
         if (targetFullScreen) {
-            // 先隐藏状态栏，再请求横屏
+            // 点击全屏那一刻，先隐藏系统栏，再请求横屏
             currentActivity.prepareEnterPlayerFullScreen()
 
             currentActivity.requestedOrientation =
                 ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         } else {
-            // 退出全屏时，先请求竖屏
-            // 系统栏等真正回到竖屏后再恢复
+            // 点击退出全屏时，先请求竖屏
+            // 系统栏恢复交给下面 currentFullScreen 的监听
             currentActivity.requestedOrientation =
                 ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 
     /**
-     * currentFullScreen 是当前屏幕是否真的已经横屏。
+     * currentFullScreen 表示屏幕是否真的已经横过来了。
      *
-     * 横屏后应用全屏系统栏。
-     * 竖屏后恢复普通系统栏。
+     * 注意这里一定要同时监听 targetFullScreen。
+     * 否则第一次点击全屏时，可能 prepare 刚隐藏系统栏，
+     * 竖屏恢复逻辑又把系统栏显示出来。
      */
-    LaunchedEffect(currentFullScreen, activity) {
+    LaunchedEffect(targetFullScreen, currentFullScreen, activity) {
         val currentActivity = activity ?: return@LaunchedEffect
 
-        if (currentFullScreen) {
-            currentActivity.applyPlayerLandscapeBars()
-        } else {
-            currentActivity.applyPlayerPortraitBars()
+        when {
+            targetFullScreen && currentFullScreen -> {
+                // 已经真正横屏，进入完整全屏状态
+                currentActivity.applyPlayerLandscapeBars()
+            }
 
-            // 方向切换结束后再恢复一次，避免状态栏只剩黑条
-            delay(120L)
-            currentActivity.applyPlayerPortraitBars()
+            targetFullScreen && !currentFullScreen -> {
+                // 正在从竖屏切横屏，继续保持系统栏隐藏
+                currentActivity.prepareEnterPlayerFullScreen()
+
+                delay(80L)
+                currentActivity.prepareEnterPlayerFullScreen()
+            }
+
+            !targetFullScreen && currentFullScreen -> {
+                // 正在从横屏切回竖屏
+                // 这里不要恢复系统栏，等真的回到竖屏后再恢复
+            }
+
+            !targetFullScreen && !currentFullScreen -> {
+                // 已经真正回到竖屏，恢复普通状态
+                currentActivity.applyPlayerPortraitBars()
+
+                delay(120L)
+                currentActivity.applyPlayerPortraitBars()
+            }
         }
     }
 
     DisposableEffect(activity) {
         onDispose {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-            // 离开视频详情页时，只恢复系统栏显示和布局方式。
-            // 不修改状态栏颜色，也不修改状态栏图标颜色，避免影响首页。
-            activity?.applyAppDefaultBars()
+            activity?.applyPlayerPortraitBars()
         }
     }
 }
 
 /**
- * 回到 App 普通页面时的系统栏状态。
- *
- * 这里只做三件事：
- * 1. 内容不要绘制到系统栏下面。
- * 2. 显示状态栏和导航栏。
- * 3. 清理全屏相关 flag。
- *
- * 注意：这里不改状态栏颜色，也不改状态栏图标颜色。
- */
-private fun Activity.applyAppDefaultBars() {
-    WindowCompat.setDecorFitsSystemWindows(window, true)
-
-    window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-    window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-
-    val controller = WindowInsetsControllerCompat(window, window.decorView)
-    controller.show(WindowInsetsCompat.Type.systemBars())
-
-    window.decorView.post {
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-
-        val newController = WindowInsetsControllerCompat(window, window.decorView)
-        newController.show(WindowInsetsCompat.Type.systemBars())
-    }
-}
-
-/**
  * 点击全屏后立刻执行。
- *
- * 目的是避免第一次横屏时，系统状态栏短暂显示出来。
- *
- * 注意：这里不修改状态栏颜色。
+ * 不改状态栏颜色，只隐藏系统栏，并允许内容铺到系统栏区域。
  */
 private fun Activity.prepareEnterPlayerFullScreen() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -124,8 +108,6 @@ private fun Activity.prepareEnterPlayerFullScreen() {
     controller.systemBarsBehavior =
         WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-    // 有些机型第一次切横屏时，hide 会被系统布局过程覆盖
-    // 所以下一帧再隐藏一次
     window.decorView.post {
         val newController = WindowInsetsControllerCompat(window, window.decorView)
         newController.hide(WindowInsetsCompat.Type.systemBars())
@@ -136,8 +118,6 @@ private fun Activity.prepareEnterPlayerFullScreen() {
 
 /**
  * 横屏全屏状态。
- *
- * 注意：这里不修改状态栏颜色。
  */
 private fun Activity.applyPlayerLandscapeBars() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -152,10 +132,7 @@ private fun Activity.applyPlayerLandscapeBars() {
 
 /**
  * 竖屏普通状态。
- *
- * 状态栏显示，视频内容从状态栏下面开始。
- *
- * 注意：这里不修改状态栏颜色，也不修改状态栏图标颜色。
+ * 状态栏显示，内容不进入状态栏下面。
  */
 private fun Activity.applyPlayerPortraitBars() {
     WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -167,7 +144,6 @@ private fun Activity.applyPlayerPortraitBars() {
 
     controller.show(WindowInsetsCompat.Type.systemBars())
 
-    // 下一帧再恢复一次，防止横竖屏切换覆盖 show
     window.decorView.post {
         WindowCompat.setDecorFitsSystemWindows(window, true)
 

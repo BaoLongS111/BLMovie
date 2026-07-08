@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
@@ -30,6 +31,15 @@ fun ShoppingCartIcon() {
 fun ArrowIcon(tint: Color = LocalArrowColor.current) {
     Icon(
         imageVector = Icons.Default.ChevronRight,
+        contentDescription = null,
+        tint = tint,
+    )
+}
+
+@Composable
+fun ExpandMoreIcon(tint: Color = LocalArrowColor.current) {
+    Icon(
+        imageVector = Icons.Default.ExpandMore,
         contentDescription = null,
         tint = tint,
     )

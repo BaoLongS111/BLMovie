@@ -114,7 +114,8 @@ fun HomeRoute(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
     viewModel: HomeViewModel = hiltViewModel(),
-    onMovieClick: (Movie) -> Unit
+    onMovieClick: (Movie) -> Unit,
+    onSearchClick:()->Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -142,7 +143,8 @@ fun HomeRoute(
         onRefresh = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
         onRetry = viewModel::retry,
-        onMovieClick = onMovieClick
+        onMovieClick = onMovieClick,
+        onSearchClick = onSearchClick
     )
 }
 
@@ -155,7 +157,8 @@ fun HomeScreen(
     onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onRetry: () -> Unit = {},
-    onMovieClick: (Movie) -> Unit = {}
+    onMovieClick: (Movie) -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     val pageState = uiState.pageState
     val banners = uiState.banners
@@ -171,7 +174,8 @@ fun HomeScreen(
         topBar = {
             MyHomeAppBar(
                 sharedTransitionScope = sharedTransitionScope,
-                animatedContentScope = animatedContentScope
+                animatedContentScope = animatedContentScope,
+                onSearchClick = onSearchClick
             )
         },
         //排除底部导航栏边距
@@ -294,10 +298,6 @@ fun Banners(
     modifier: Modifier = Modifier
 ) {
 
-    if (banners.isEmpty()) {
-        return
-    }
-
     val pageState = rememberPagerState { banners.size }
     var isUserHolding by remember {
         mutableStateOf(false)
@@ -332,6 +332,20 @@ fun Banners(
                     modifier = Modifier.fillMaxSize(),
                     placeholder = painterResource(R.drawable.placeholder)
                 )
+                // 黑色渐变遮罩，放在图片上面
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0.70f to Color.Transparent,
+                                    1f to Color.Black.copy(alpha = 0.45f)
+                                )
+                            )
+                        )
+                )
+
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -407,7 +421,8 @@ fun Banners(
 @Composable
 fun MyHomeAppBar(
     sharedTransitionScope: SharedTransitionScope? = null,
-    animatedContentScope: AnimatedContentScope? = null
+    animatedContentScope: AnimatedContentScope? = null,
+    onSearchClick: () -> Unit = {},
 ) {
 
     val logoModifier = Modifier
@@ -451,7 +466,7 @@ fun MyHomeAppBar(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.background)
                     .clickable {
-
+                        onSearchClick()
                     }
             ) {
                 Icon(

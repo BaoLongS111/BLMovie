@@ -2,7 +2,10 @@ package com.balon.blmovie.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +24,8 @@ import com.balon.blmovie.feature.main.navigation.mainScreen
 import com.balon.blmovie.feature.main.navigation.navigateToMain
 import com.balon.blmovie.feature.moviedetail.navigation.movieDetailScreen
 import com.balon.blmovie.feature.moviedetail.navigation.navigateToMovieDetail
+import com.balon.blmovie.feature.search.navigation.navigateToSearch
+import com.balon.blmovie.feature.search.navigation.searchScreen
 import com.balon.blmovie.feature.splash.navigation.SplashRoutes
 import com.balon.blmovie.feature.splash.navigation.splashScreen
 
@@ -59,58 +64,52 @@ fun MyApp() {
 
                 mainScreen(
                     sharedTransitionScope = this@SharedTransitionLayout,
-                    onMovieClick = {it->
+                    onMovieClick = { it ->
                         backStack.navigateToMovieDetail(it.vodId)
-                    }
+                    },
+                    onSearchClick = backStack::navigateToSearch
                 )
                 movieDetailScreen(
                     onBack = { backStack.removeLastOrNull() },
                     onHomeClick = backStack::navigateToMain
                 )
-            },
-            // 正向进入，比如从首页进入详情页
-            transitionSpec = {
-                slideInHorizontally(
-                    animationSpec = tween(260),
-                    initialOffsetX = { fullWidth -> fullWidth }
-                ) + fadeIn(
-                    animationSpec = tween(260)
-                ) togetherWith slideOutHorizontally(
-                    animationSpec = tween(260),
-                    targetOffsetX = { fullWidth -> -fullWidth / 4 }
-                ) + fadeOut(
-                    animationSpec = tween(180)
+                searchScreen(
+                    onBack = { backStack.removeLastOrNull() },
+                    onSearch = {}
                 )
-            },
 
-            // 返回退出，比如从详情页返回首页
+            },
+            transitionSpec = {
+                (
+                        slideInHorizontally(
+                            animationSpec = tween(
+                                durationMillis = 320,
+                                easing = FastOutSlowInEasing
+                            ),
+                            initialOffsetX = { fullWidth -> fullWidth }
+                        ) togetherWith ExitTransition.None
+                        ).apply {
+                        targetContentZIndex = 1f
+                    }
+            },
             popTransitionSpec = {
-                slideInHorizontally(
-                    animationSpec = tween(260),
-                    initialOffsetX = { fullWidth -> -fullWidth / 4 }
-                ) + fadeIn(
-                    animationSpec = tween(260)
-                ) togetherWith slideOutHorizontally(
-                    animationSpec = tween(260),
-                    targetOffsetX = { fullWidth -> fullWidth }
-                ) + fadeOut(
-                    animationSpec = tween(180)
-                )
+                (
+                        EnterTransition.None togetherWith slideOutHorizontally(
+                            animationSpec = tween(
+                                durationMillis = 320,
+                                easing = FastOutSlowInEasing
+                            ),
+                            targetOffsetX = { fullWidth -> fullWidth }
+                        )
+                        ).apply {
+                        targetContentZIndex = -1f
+                    }
             },
 
             // 手势返回的时候也用同一套
             predictivePopTransitionSpec = {
-                slideInHorizontally(
-                    animationSpec = tween(260),
-                    initialOffsetX = { fullWidth -> -fullWidth / 4 }
-                ) + fadeIn(
-                    animationSpec = tween(260)
-                ) togetherWith slideOutHorizontally(
-                    animationSpec = tween(260),
-                    targetOffsetX = { fullWidth -> fullWidth }
-                ) + fadeOut(
-                    animationSpec = tween(180)
-                )
+                // 不做预测返回预览动画
+                EnterTransition.None togetherWith ExitTransition.None
             }
         )
     }

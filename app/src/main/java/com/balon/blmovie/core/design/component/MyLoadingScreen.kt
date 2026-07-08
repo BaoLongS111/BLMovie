@@ -1,5 +1,6 @@
 package com.balon.blmovie.core.design.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +67,7 @@ fun MyLoadingScreen(
 
 @Composable
 fun DelayedLoadingScreen(
+    modifier: Modifier = Modifier,
     delayMillis: Long = 200L
 ) {
     var showLoading by remember {
@@ -73,12 +75,19 @@ fun DelayedLoadingScreen(
     }
 
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(delayMillis.milliseconds)
+        kotlinx.coroutines.delay(delayMillis)
         showLoading = true
     }
 
-    if (showLoading) {
-        MyLoadingScreen()
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (showLoading) {
+            MyLoadingScreen()
+        }
     }
 }
 

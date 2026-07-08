@@ -30,12 +30,14 @@ import kotlinx.coroutines.launch
 fun MainRoute(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
-    onMovieClick:(Movie)-> Unit
+    onMovieClick:(Movie)-> Unit,
+    onSearchClick:()->Unit,
 ) {
     MainScreen(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
-        onMovieClick = onMovieClick
+        onMovieClick = onMovieClick,
+        onSearchClick = onSearchClick
     )
 }
 
@@ -43,7 +45,8 @@ fun MainRoute(
 fun MainScreen(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
-    onMovieClick:(Movie)-> Unit = {}
+    onMovieClick:(Movie)-> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     //当前选中的界面名称
     var currentDestination by rememberSaveable {
@@ -70,7 +73,8 @@ fun MainScreen(
                 0 -> HomeRoute(
                     sharedTransitionScope = sharedTransitionScope,
                     animatedContentScope = animatedContentScope,
-                    onMovieClick = onMovieClick
+                    onMovieClick = onMovieClick,
+                    onSearchClick = onSearchClick
                 )
 
                 1 -> ShortVideoRoute()

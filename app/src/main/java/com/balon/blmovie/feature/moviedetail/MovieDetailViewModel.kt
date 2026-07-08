@@ -7,19 +7,16 @@ import com.balon.blmovie.core.extension.asResult
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.RefreshState
-import com.balon.blmovie.feature.home.HomeViewModel.Companion.EXPECTED_COMSUME_TIME
-import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailNavigation
+import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailRoutes
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @HiltViewModel(
     assistedFactory = MovieDetailViewModel.Factory::class
@@ -27,7 +24,7 @@ import timber.log.Timber
 class MovieDetailViewModel @AssistedInject constructor (
     private val movieDetailRepository: MovieDetailRepository,
     @Assisted
-    private val navKey: MovieDetailNavigation.MovieDetail
+    private val navKey: MovieDetailRoutes.MovieDetail
 ): ViewModel() {
 
     private val _uiState = MutableStateFlow(MovieDetailUiState())
@@ -87,7 +84,7 @@ class MovieDetailViewModel @AssistedInject constructor (
 
     @AssistedFactory
     interface Factory {
-        fun create(navKey: MovieDetailNavigation.MovieDetail): MovieDetailViewModel
+        fun create(navKey: MovieDetailRoutes.MovieDetail): MovieDetailViewModel
     }
 
 }

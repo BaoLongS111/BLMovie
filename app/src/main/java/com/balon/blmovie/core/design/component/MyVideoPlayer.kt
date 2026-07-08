@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Doorbell
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Fullscreen
@@ -175,81 +178,11 @@ fun MyVideoPlayer(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner, exoPlayer) {
-        var shouldResumeWhenActive = false
-        var pausedByLifecycle = false
-
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE,
-                Lifecycle.Event.ON_STOP -> {
-                    /**
-                     * 第一次进入后台时，记录暂停前是否是播放状态。
-                     *
-                     * 注意不要每次 ON_STOP 都重新赋值。
-                     * 因为 ON_PAUSE 里 pause 后，ON_STOP 再判断 isPlaying 就会变成 false。
-                     */
-                    if (!pausedByLifecycle) {
-                        shouldResumeWhenActive =
-                            exoPlayer.isPlaying || exoPlayer.playWhenReady
-
-                        pausedByLifecycle = true
-                    }
-                    exoPlayer.pause()
-                }
-
-                Lifecycle.Event.ON_RESUME -> {
-                    /**
-                     * 回到当前页面时，如果之前是因为生命周期暂停的，
-                     * 并且暂停前确实在播放，就恢复播放。
-                     */
-                    if (
-                        pausedByLifecycle &&
-                        shouldResumeWhenActive &&
-                        exoPlayer.playbackState != Player.STATE_ENDED
-                    ) {
-                        exoPlayer.play()
-                    }
-
-                    pausedByLifecycle = false
-                    shouldResumeWhenActive = false
-                }
-
-                else -> Unit
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     /**
      * 控制栏是否显示。
      */
     var controlsVisible by remember {
         mutableStateOf(false)
-    }
-
-    /**
-     * 横竖屏切换过程中，隐藏控制栏。
-     * 切换完成后，再显示控制栏。
-     */
-    LaunchedEffect(isFullScreenChanging) {
-        if (isFullScreenChanging) {
-            controlsVisible = false
-        } else {
-            controlsVisible = true
-        }
-    }
-
-    LaunchedEffect(isLeavingPage) {
-        if (isLeavingPage) {
-            exoPlayer.pause()
-            exoPlayer.clearVideoSurface()
-        }
     }
 
     /**
@@ -346,6 +279,75 @@ fun MyVideoPlayer(
      */
     var speed by remember {
         mutableStateOf(1f)
+    }
+
+    DisposableEffect(lifecycleOwner, exoPlayer) {
+        var shouldResumeWhenActive = false
+        var pausedByLifecycle = false
+
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE,
+                Lifecycle.Event.ON_STOP -> {
+                    /**
+                     * 第一次进入后台时，记录暂停前是否是播放状态。
+                     *
+                     * 注意不要每次 ON_STOP 都重新赋值。
+                     * 因为 ON_PAUSE 里 pause 后，ON_STOP 再判断 isPlaying 就会变成 false。
+                     */
+                    if (!pausedByLifecycle) {
+                        shouldResumeWhenActive =
+                            exoPlayer.isPlaying || exoPlayer.playWhenReady
+
+                        pausedByLifecycle = true
+                    }
+                    exoPlayer.pause()
+                }
+
+                Lifecycle.Event.ON_RESUME -> {
+                    /**
+                     * 回到当前页面时，如果之前是因为生命周期暂停的，
+                     * 并且暂停前确实在播放，就恢复播放。
+                     */
+                    if (
+                        pausedByLifecycle &&
+                        shouldResumeWhenActive &&
+                        exoPlayer.playbackState != Player.STATE_ENDED
+                    ) {
+                        exoPlayer.play()
+                    }
+
+                    pausedByLifecycle = false
+                    shouldResumeWhenActive = false
+                }
+
+                else -> Unit
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    /**
+     * 横竖屏切换过程中，隐藏控制栏。
+     * 切换完成后，再显示控制栏。
+     */
+    LaunchedEffect(isFullScreenChanging) {
+        if (isFullScreenChanging) {
+            controlsVisible = false
+            isMenuExpanded = false
+        }
+    }
+
+    LaunchedEffect(isLeavingPage) {
+        if (isLeavingPage) {
+            exoPlayer.pause()
+            exoPlayer.clearVideoSurface()
+        }
     }
 
     /**
@@ -784,8 +786,9 @@ fun MyVideoPlayer(
                     controlsVisible = true
                 },
                 onFullScreenClick = {
+                    controlsVisible = false
+                    isMenuExpanded = false
                     onFullScreenClick()
-                    controlsVisible = true
                 },
                 onMenuExpandedChange = { expanded ->
                     isMenuExpanded = expanded
@@ -837,7 +840,7 @@ private fun PlayerControlsOverlay(
             onBackClick = onBackClick,
             onHomeClick = onHomeClick,
             onMoreClick = onMoreClick,
-            modifier = Modifier.align(Alignment.TopCenter)
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding()
         )
 
         /**
@@ -919,7 +922,7 @@ private fun TopPlayerBar(
             modifier = Modifier.size(24.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBackIosNew,
+                imageVector = Icons.Default.ArrowBackIos,
                 contentDescription = "返回",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
@@ -933,7 +936,7 @@ private fun TopPlayerBar(
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Home,
+                    imageVector = Icons.Default.Doorbell,
                     contentDescription = "主页",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)

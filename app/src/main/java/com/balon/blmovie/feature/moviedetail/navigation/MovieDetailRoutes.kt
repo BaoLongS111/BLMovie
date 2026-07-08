@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 /**
  * 影视详情页路由
  */
-object MovieDetailNavigation {
+object MovieDetailRoutes {
 
     @Serializable
     data class MovieDetail(
@@ -22,7 +22,7 @@ object MovieDetailNavigation {
  */
 fun NavBackStack<NavKey>.navigateToMovieDetail(movieId: Long) {
     add(
-        MovieDetailNavigation.MovieDetail(movieId = movieId)
+        MovieDetailRoutes.MovieDetail(movieId = movieId)
     )
 }
 
@@ -33,7 +33,7 @@ fun EntryProviderScope<NavKey>.movieDetailScreen(
     onBack: () -> Unit,
     onHomeClick: () -> Unit
 ) {
-    entry<MovieDetailNavigation.MovieDetail> { key ->
+    entry<MovieDetailRoutes.MovieDetail> { key ->
         MovieDetailRoute(
             navKey = key,
             onBack = onBack,

@@ -2,17 +2,13 @@ package com.balon.blmovie.feature.moviedetail
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -23,43 +19,38 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balon.blmovie.core.design.component.DelayedLoadingScreen
 import com.balon.blmovie.core.design.component.MyErrorScreen
-import com.balon.blmovie.core.design.component.MyLoadingScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
-import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.extension.parsePlayEpisodes
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.PlayEpisode
+import com.balon.blmovie.core.model.response.Movie
+import com.balon.blmovie.feature.moviedetail.component.DetailFunctionSection
 import com.balon.blmovie.feature.moviedetail.component.EpisodeSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
-import com.balon.blmovie.feature.moviedetail.component.MovieDetailData
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
-import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailNavigation
+import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailRoutes
 import kotlinx.coroutines.launch
 
 @Composable
 fun MovieDetailRoute(
-    navKey: MovieDetailNavigation.MovieDetail,
+    navKey: MovieDetailRoutes.MovieDetail,
     onBack: () -> Unit,
     onHomeClick: () -> Unit,
 ) {
@@ -223,121 +214,127 @@ fun MovieDetailScreen(
             )
 
             if (!currentFullScreen) {
-
-                val pagerState = rememberPagerState(
-                    initialPage = 0,
-                    pageCount = {
-                        2
-                    }
-                )
-
-                val coroutineScope = rememberCoroutineScope()
-
-                var showDanmakuInput by remember {
-                    mutableStateOf(false)
-                }
-
-                MovieDetailTabRow(
-                    selectedIndex = pagerState.currentPage,
-                    commentCount = 2393,
-                    onTabClick = { index ->
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
+                DetailContent(
+                    movie = movie,
+                    episodes = episodes,
+                    currentEpisode = currentEpisode,
+                    onEpisodeClick = { episode ->
+                        currentEpisode = episode
                     },
-                    onDanmakuClick = {
-                        showDanmakuInput = true
-                    }
+                    modifier = Modifier.weight(1f)
                 )
-
-                HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
-                    when (page) {
-                        0 -> {
-                            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                item {
-                                    MovieInfoHeader(
-                                        title = movie.name.orEmpty(),
-                                        note = movie.note.orEmpty()
-                                    )
-                                }
-
-                                item {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = SpaceSmall),
-
-                                        ) {
-                                        MovieDetailData.entries.forEach { it ->
-                                            Column(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
-                                                Image(
-                                                    painter = painterResource(it.icon),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                                Text(
-                                                    text = it.text.toString(),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                    }
-
-
-                                }
-
-                                item {
-                                    EpisodeSection(
-                                        episodes = episodes,
-                                        currentEpisode = currentEpisode,
-                                        onEpisodeClick = { episode ->
-                                            currentEpisode = episode
-                                        }
-                                    )
-                                }
-
-                                item {
-                                    MovieDescriptionSection(
-                                        description = movie.description.orEmpty()
-                                    )
-                                }
-                            }
-                        }
-
-                        1 -> {
-                            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                item {
-                                    Text(
-                                        text = "这里显示评论列表",
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (showDanmakuInput) {
-                    DanmakuInputDialog(
-                        onDismiss = {
-                            showDanmakuInput = false
-                        },
-                        onSendClick = { text ->
-                            showDanmakuInput = false
-                            // TODO 这里调用 viewModel 发送弹幕
-                        }
-                    )
-                }
-
             }
         }
 
     }
 
+}
+
+@Composable
+fun DetailContent(
+    movie: Movie,
+    episodes: List<PlayEpisode>,
+    currentEpisode: PlayEpisode?,
+    onEpisodeClick: (PlayEpisode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = {
+            2
+        }
+    )
+
+    val coroutineScope = rememberCoroutineScope()
+
+    var showDanmakuInput by remember {
+        mutableStateOf(false)
+    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        MovieDetailTabRow(
+            pagerState = pagerState,
+            commentCount = 2393,
+            onTabClick = { index ->
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(index)
+                }
+            },
+            onDanmakuClick = {
+                showDanmakuInput = true
+            }
+        )
+
+        HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
+            when (page) {
+                0 -> {
+                    DetailPage(
+                        movie = movie,
+                        episodes = episodes,
+                        currentEpisode = currentEpisode,
+                        onEpisodeClick = onEpisodeClick
+                    )
+                }
+
+                1 -> { CommentPage() }
+            }
+        }
+
+        if (showDanmakuInput) {
+            DanmakuInputDialog(
+                onDismiss = {
+                    showDanmakuInput = false
+                },
+                onSendClick = { text ->
+                    showDanmakuInput = false
+                    // TODO 这里调用 viewModel 发送弹幕
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun DetailPage(
+    movie: Movie,
+    episodes: List<PlayEpisode>,
+    currentEpisode: PlayEpisode?,
+    onEpisodeClick: (PlayEpisode) -> Unit,
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            MovieInfoHeader(movie = movie)
+        }
+        item { DetailFunctionSection() }
+
+        item {
+            EpisodeSection(
+                episodes = episodes,
+                currentEpisode = currentEpisode,
+                onEpisodeClick = onEpisodeClick
+            )
+        }
+
+        item {
+            MovieDescriptionSection(
+                description = movie.description.orEmpty()
+            )
+        }
+    }
+}
+
+@Composable
+fun CommentPage() {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Text(
+                text = "这里显示评论列表",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
 }
 
 @Composable

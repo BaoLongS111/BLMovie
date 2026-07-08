@@ -61,7 +61,11 @@ fun EpisodeSection(
                         } else {
                             MaterialTheme.colorScheme.background
                         },
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        contentColor = if (selected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        }
                     )
                 ) {
                     Text(

@@ -1,9 +1,8 @@
 package com.balon.blmovie.feature.moviedetail.component
 
-import androidx.compose.ui.res.stringResource
 import com.balon.blmovie.R
 
-enum class MovieDetailData(
+enum class DetailFunctionData(
     val icon: Int,
     val selectedIcon:Int,
     val text: Int

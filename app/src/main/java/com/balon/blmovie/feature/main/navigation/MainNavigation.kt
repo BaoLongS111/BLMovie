@@ -33,13 +33,15 @@ fun NavBackStack<NavKey>.navigateToMain(){
  */
 fun EntryProviderScope<NavKey>.mainScreen(
     sharedTransitionScope: SharedTransitionScope,
-    onMovieClick:(Movie)-> Unit
+    onMovieClick:(Movie)-> Unit,
+    onSearchClick:()->Unit,
 ) {
     entry<MainRoutes.Main> {
         MainRoute(
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = LocalNavAnimatedContentScope.current,
-            onMovieClick = onMovieClick
+            onMovieClick = onMovieClick,
+            onSearchClick = onSearchClick
         )
     }
 }

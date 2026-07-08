@@ -34,4 +34,6 @@
     <string name="barrage_message">Send Barrage Messages</string>
     <string name="play_list">Play List</string>
     <string name="plot_summary">Plot Summary</string>
+    <string name="summary">Summary</string>
+    <string name="comment">Comment</string>
 </resources>
