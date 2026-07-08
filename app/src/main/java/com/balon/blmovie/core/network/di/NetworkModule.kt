@@ -9,7 +9,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.Call
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import javax.inject.Singleton
 import java.util.concurrent.TimeUnit
@@ -70,7 +73,28 @@ class NetworkModule {
                     addInterceptor(ChuckerInterceptor.Builder(MyApplication.instance).build())
                 }
             }
+            .addInterceptor(JsonFixInterceptor())
             .build()
     }
 
+}
+
+class JsonFixInterceptor : Interceptor {
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        val body = response.body ?: return response
+        val contentType = body.contentType()
+        val rawJson = body.string()
+
+        val fixedJson = rawJson.replace(
+            Regex("\"vodDoubanScore\"\\s*:\\s*(\\d+)\\.\\.(\\d+)"),
+            "\"vodDoubanScore\":$1.$2"
+        )
+
+        return response.newBuilder()
+            .body(fixedJson.toResponseBody(contentType))
+            .build()
+    }
 }

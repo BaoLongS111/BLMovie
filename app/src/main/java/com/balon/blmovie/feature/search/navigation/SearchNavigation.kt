@@ -3,7 +3,10 @@ package com.balon.blmovie.feature.search.navigation
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.balon.blmovie.core.model.MovieAdult
+import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.search.SearchRoute
+import kotlinx.serialization.Serializable
 
 
 /**
@@ -11,6 +14,7 @@ import com.balon.blmovie.feature.search.SearchRoute
  */
 object SearchRoutes {
 
+    @Serializable
     data object Search: NavKey
 }
 
@@ -26,12 +30,14 @@ fun NavBackStack<NavKey>.navigateToSearch(){
  */
 fun EntryProviderScope<NavKey>.searchScreen(
     onBack:()->Unit,
-    onSearch:()-> Unit
+    onMovieItemClick:(Movie)->Unit,
+    onMovieAdultItemClick:(MovieAdult)->Unit,
 ){
     entry<SearchRoutes.Search>{
         SearchRoute(
             onBack = onBack,
-            onSearch  = onSearch
+            onMovieItemClick = onMovieItemClick,
+            onMovieAdultItemClick = onMovieAdultItemClick
         )
     }
 }

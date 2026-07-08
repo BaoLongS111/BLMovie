@@ -4,6 +4,8 @@ import android.net.Network
 import com.balon.blmovie.core.model.Article
 import com.balon.blmovie.core.model.Category
 import com.balon.blmovie.core.model.HomeData
+import com.balon.blmovie.core.model.MovieAdult
+import com.balon.blmovie.core.model.MovieAdultDetail
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
@@ -45,4 +47,20 @@ interface MyNetworkDatasource {
     suspend fun movieDetail(
         movieId: Long
     ): NetworkResponse<Movie>
+
+    suspend fun searchMovie(
+        data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<Movie>>
+
+    /**
+     * 获取影视Adult详情
+     */
+    suspend fun movieAdultDetail(
+        movieAdultId: Long
+    ): NetworkResponse<MovieAdultDetail>
+
+    suspend fun searchMovieAdult(
+       data:Map<String, String>
+    ): NetworkResponse<NetworkPageData<MovieAdult>>
+
 }
