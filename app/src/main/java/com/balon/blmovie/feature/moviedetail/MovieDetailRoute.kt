@@ -30,12 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.balon.blmovie.core.design.component.DelayedLoadingScreen
 import com.balon.blmovie.core.design.component.MyErrorScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
@@ -50,7 +48,6 @@ import com.balon.blmovie.feature.moviedetail.component.MovieDetailSkeletonScreen
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
-import com.balon.blmovie.feature.moviedetail.component.prepareEnterPlayerFullScreen
 import com.balon.blmovie.feature.moviedetail.navigation.MovieDetailRoutes
 import kotlinx.coroutines.launch
 
@@ -108,12 +105,6 @@ fun MovieDetailScreen(
 
     var isLeavingPage by remember {
         mutableStateOf(false)
-    }
-
-    val context = LocalContext.current
-
-    val activity = remember(context) {
-        context.findActivity()
     }
 
     /**
@@ -180,6 +171,7 @@ fun MovieDetailScreen(
             MyVideoPlayer(
                 url = currentEpisode?.url.orEmpty(),
                 title = movie.name,
+                posterUrl = movie.pic,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
                 onEpisodeSelected = { episode ->
@@ -200,9 +192,6 @@ fun MovieDetailScreen(
                 isLeavingPage = isLeavingPage,
 
                 onFullScreenClick = {
-                    if (!targetFullScreen) {
-                        activity?.prepareEnterPlayerFullScreen()
-                    }
 
                     targetFullScreen = !targetFullScreen
                 },
@@ -231,6 +220,7 @@ fun MovieDetailScreen(
             )
 
             if (!currentFullScreen) {
+
                 DetailContent(
                     movie = movie,
                     episodes = episodes,
@@ -241,6 +231,8 @@ fun MovieDetailScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+
         }
 
     }
@@ -295,7 +287,9 @@ fun DetailContent(
                     )
                 }
 
-                1 -> { CommentPage() }
+                1 -> {
+                    CommentPage()
+                }
             }
         }
 
@@ -404,7 +398,7 @@ private fun DanmakuInputDialog(
 @Preview
 @Composable
 fun MovieDetailScreenPreview() {
-    BLMovieTheme() {
+    BLMovieTheme{
         MovieDetailScreen(MovieDetailUiState())
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -30,8 +31,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.balon.blmovie.core.design.theme.BLMovieTheme
 
 @Composable
 fun MovieDetailSkeletonScreen(
@@ -40,13 +43,16 @@ fun MovieDetailSkeletonScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .background(MaterialTheme.colorScheme.background)
+
     ) {
         // 顶部视频区域占位，和详情页播放器比例保持一致
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
+
                 .background(Color.Black)
         )
 
@@ -257,4 +263,11 @@ private fun rememberSkeletonBrush(): Brush {
             y = translate
         )
     )
+}
+@Preview(showBackground = true)
+@Composable
+fun MovieDetailSkeletonScreenPreview(){
+    BLMovieTheme{
+        MovieDetailSkeletonScreen()
+    }
 }
