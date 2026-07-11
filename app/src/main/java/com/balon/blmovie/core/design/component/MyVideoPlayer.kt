@@ -1,7 +1,6 @@
 package com.balon.blmovie.core.design.component
 
 import android.app.Activity
-import android.graphics.Bitmap
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.Context
@@ -11,7 +10,6 @@ import android.os.BatteryManager
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,9 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -84,13 +80,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SeekParameters
-import androidx.media3.inspector.frame.FrameExtractor
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.balon.blmovie.core.model.PlayEpisode
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.guava.await
 import kotlin.math.abs
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -102,11 +95,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.painterResource
 import androidx.media3.common.util.UnstableApi
 import com.balon.blmovie.R
 import com.quick.app.core.extension.clickableNoRipple
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val SEEK_STEP_MS = 30_000L
 private const val CONTROLS_AUTO_HIDE_TIME_MS = 3_000L
@@ -145,7 +140,7 @@ private val PlayerIconSize = 25.dp
  * 横屏控制栏统一使用同一套左右边距。
  * 顶部系统信息、顶部操作栏和底部控制栏都对齐到这条边线。
  */
-private val FullScreenHorizontalPadding = 12.dp
+private val FullScreenHorizontalPadding = 16.dp
 private val FullScreenSystemInfoTopPadding = 2.dp
 private val FullScreenTopBarTopPadding = 22.dp
 private val FullScreenBottomPadding = 8.dp
@@ -228,33 +223,6 @@ fun MyVideoPlayer(
             .build()
     }
 
-    /**
-     * 拖动进度条时抽取目标时间点的视频帧。
-     *
-     * EXACT 会解码到用户当前拖动的目标位置，预览画面更准确。
-     * 网络 HLS 的精确抽帧成本较高，因此下面会做很短的请求节流。
-     */
-    val frameExtractor = remember(url) {
-        if (url.isBlank()) {
-            null
-        } else {
-            runCatching {
-                FrameExtractor.Builder(
-                    appContext,
-                    MediaItem.fromUri(url)
-                )
-                    .setSeekParameters(SeekParameters.EXACT)
-                    .build()
-            }.getOrNull()
-        }
-    }
-
-    DisposableEffect(frameExtractor) {
-        onDispose {
-            frameExtractor?.close()
-        }
-    }
-
     var controlsVisible by remember {
         mutableStateOf(false)
     }
@@ -302,16 +270,8 @@ fun MyVideoPlayer(
         mutableLongStateOf(0L)
     }
 
-    /**
-     * 进度条预览帧。
-     * 每 1 秒取一个预览采样点，避免拖动时连续解码过多帧。
-     */
-    var previewFrameBitmap by remember(url) {
-        mutableStateOf<Bitmap?>(null)
-    }
-
-    var isPreviewFrameLoading by remember {
-        mutableStateOf(false)
+    var pendingSeekPosition by remember {
+        mutableStateOf<Long?>(null)
     }
 
     /**
@@ -486,7 +446,6 @@ fun MyVideoPlayer(
         bufferedPosition = 0L
         duration = 0L
         previewPosition = 0L
-        previewFrameBitmap = null
         isEnded = false
         isBuffering = true
         controlsVisible = false
@@ -555,6 +514,22 @@ fun MyVideoPlayer(
                     hasRenderedFirstFrame = true
                 }
             }
+
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    /*
+                     * ExoPlayer 已经接受并完成位置切换。
+                     * 使用播放器返回的真实位置继续显示。
+                     */
+                    currentPosition = newPosition.positionMs
+                    pendingSeekPosition = null
+                }
+            }
+
         }
 
         exoPlayer.addListener(listener)
@@ -583,13 +558,25 @@ fun MyVideoPlayer(
                 exoPlayer.bufferedPosition.coerceAtLeast(0L)
             }
 
-            currentPosition = if (safeDuration > 0L) {
-                exoPlayer.currentPosition.coerceIn(0L, safeDuration)
-            } else {
-                exoPlayer.currentPosition.coerceAtLeast(0L)
+            /*
+             * 拖动中或正在等待 Seek 完成时，
+             * 不要用播放器的旧位置覆盖界面位置。
+             */
+            if (
+                !isDraggingProgress &&
+                pendingSeekPosition == null
+            ) {
+                currentPosition = if (safeDuration > 0L) {
+                    exoPlayer.currentPosition.coerceIn(
+                        0L,
+                        safeDuration
+                    )
+                } else {
+                    exoPlayer.currentPosition.coerceAtLeast(0L)
+                }
             }
 
-            delay(500L)
+            delay(500L.milliseconds)
         }
     }
 
@@ -599,50 +586,11 @@ fun MyVideoPlayer(
      */
     LaunchedEffect(isBuffering) {
         if (isBuffering) {
-            delay(300L)
+            delay(300L.milliseconds)
             showBufferingIndicator = true
         } else {
             showBufferingIndicator = false
         }
-    }
-
-    /**
-     * 拖动进度条时提取目标时间点的实际视频画面。
-     *
-     * 不再按整秒取整，直接使用当前拖动位置。
-     * 仅延迟 45ms 合并过密请求，手指快速移动时旧任务会被取消。
-     */
-    val previewFrameRequestPosition = if (isDraggingProgress) {
-        previewPosition.coerceIn(0L, duration.coerceAtLeast(1L))
-    } else {
-        -1L
-    }
-
-    LaunchedEffect(
-        frameExtractor,
-        previewFrameRequestPosition
-    ) {
-        if (
-            frameExtractor == null ||
-            previewFrameRequestPosition < 0L
-        ) {
-            isPreviewFrameLoading = false
-            return@LaunchedEffect
-        }
-
-        delay(45L)
-        isPreviewFrameLoading = true
-
-        runCatching {
-            frameExtractor
-                .getFrame(previewFrameRequestPosition)
-                .await()
-                .bitmap
-        }.onSuccess { bitmap ->
-            previewFrameBitmap = bitmap
-        }
-
-        isPreviewFrameLoading = false
     }
 
     /**
@@ -667,16 +615,13 @@ fun MyVideoPlayer(
             !isLongPressSpeed &&
             gestureMode == PlayerGestureMode.None
         ) {
-            delay(CONTROLS_AUTO_HIDE_TIME_MS)
+            delay(CONTROLS_AUTO_HIDE_TIME_MS.milliseconds)
 
             if (
                 controlsVisible &&
                 !isDraggingProgress &&
                 !isBuffering &&
-                !isMenuExpanded &&
-                !isFullScreenChanging &&
-                !isLongPressSpeed &&
-                gestureMode == PlayerGestureMode.None
+                !isMenuExpanded && !isLongPressSpeed && gestureMode == PlayerGestureMode.None
             ) {
                 controlsVisible = false
             }
@@ -685,7 +630,7 @@ fun MyVideoPlayer(
 
     LaunchedEffect(seekHint) {
         if (seekHint != null) {
-            delay(SEEK_HINT_SHOW_TIME_MS)
+            delay(SEEK_HINT_SHOW_TIME_MS.milliseconds)
             seekHint = null
         }
     }
@@ -1086,16 +1031,26 @@ fun MyVideoPlayer(
                         gestureMode == PlayerGestureMode.None,
             modifier = Modifier.fillMaxSize()
         ) {
+
+            val displayedPosition = when {
+                // 正在拖动时，显示手指选择的位置
+                isDraggingProgress -> previewPosition
+
+                // 已经松手，但播放器还没有确认跳转时
+                pendingSeekPosition != null -> pendingSeekPosition!!
+
+                // 正常播放时
+                else -> currentPosition
+            }
+
             PlayerControlsOverlay(
                 title = title,
                 isPlaying = isPlaying,
-                currentPosition = currentPosition,
+                currentPosition = displayedPosition,
                 duration = duration,
                 bufferedPosition = bufferedPosition,
                 isDraggingProgress = isDraggingProgress,
                 previewPosition = previewPosition,
-                previewFrameBitmap = previewFrameBitmap,
-                isPreviewFrameLoading = isPreviewFrameLoading,
                 speed = speed,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
@@ -1115,10 +1070,22 @@ fun MyVideoPlayer(
                         .coerceIn(0L, duration.coerceAtLeast(1L))
                 },
                 onSliderValueChangeFinished = {
-                    exoPlayer.seekTo(previewPosition)
-                    isEnded = false
+                    val targetPosition = previewPosition.coerceIn(
+                        minimumValue = 0L,
+                        maximumValue = duration.coerceAtLeast(1L)
+                    )
+
+                    /*
+                     * 先保存目标位置。
+                     * 即使拖动状态结束，进度条也继续显示这个位置。
+                     */
+                    pendingSeekPosition = targetPosition
+
                     isDraggingProgress = false
+                    isEnded = false
                     controlsVisible = true
+
+                    exoPlayer.seekTo(targetPosition)
                 },
                 onSpeedSelected = { newSpeed ->
                     speed = newSpeed
@@ -1165,8 +1132,6 @@ private fun PlayerControlsOverlay(
     bufferedPosition: Long,
     isDraggingProgress: Boolean,
     previewPosition: Long,
-    previewFrameBitmap: Bitmap?,
-    isPreviewFrameLoading: Boolean,
     speed: Float,
     episodes: List<PlayEpisode>,
     currentEpisode: PlayEpisode?,
@@ -1227,8 +1192,6 @@ private fun PlayerControlsOverlay(
                 bufferedPosition = bufferedPosition,
                 isDraggingProgress = isDraggingProgress,
                 previewPosition = previewPosition,
-                previewFrameBitmap = previewFrameBitmap,
-                isPreviewFrameLoading = isPreviewFrameLoading,
                 speed = speed,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
@@ -1257,8 +1220,6 @@ private fun PlayerControlsOverlay(
                 bufferedPosition = bufferedPosition,
                 isDraggingProgress = isDraggingProgress,
                 previewPosition = previewPosition,
-                previewFrameBitmap = previewFrameBitmap,
-                isPreviewFrameLoading = isPreviewFrameLoading,
                 onPlayPauseClick = onPlayPauseClick,
                 onSliderValueChange = onSliderValueChange,
                 onSliderValueChangeFinished = onSliderValueChangeFinished,
@@ -1287,14 +1248,14 @@ private fun FullScreenSystemInfoBar(
     }
 
     var batteryLevel by remember(context) {
-        mutableStateOf(context.readBatteryLevel())
+        mutableIntStateOf(context.readBatteryLevel())
     }
 
     LaunchedEffect(context) {
         while (true) {
             timeText = currentClockText()
             batteryLevel = context.readBatteryLevel()
-            delay(30_000L)
+            delay(30_000L.milliseconds)
         }
     }
 
@@ -1303,7 +1264,7 @@ private fun FullScreenSystemInfoBar(
             .fillMaxWidth()
             .padding(
                 start = FullScreenHorizontalPadding,
-                end = FullScreenHorizontalPadding,
+                end = FullScreenHorizontalPadding + 12.dp,
                 top = FullScreenSystemInfoTopPadding
             )
     ) {
@@ -1486,8 +1447,6 @@ private fun PortraitBottomControls(
     bufferedPosition: Long,
     isDraggingProgress: Boolean,
     previewPosition: Long,
-    previewFrameBitmap: Bitmap?,
-    isPreviewFrameLoading: Boolean,
     onPlayPauseClick: () -> Unit,
     onSliderValueChange: (Float) -> Unit,
     onSliderValueChangeFinished: () -> Unit,
@@ -1521,8 +1480,6 @@ private fun PortraitBottomControls(
             bufferedPosition = bufferedPosition,
             showPreview = isDraggingProgress,
             previewPosition = previewPosition,
-            previewFrameBitmap = previewFrameBitmap,
-            isPreviewFrameLoading = isPreviewFrameLoading,
             onValueChange = onSliderValueChange,
             onValueChangeFinished = onSliderValueChangeFinished,
             modifier = Modifier
@@ -1562,8 +1519,6 @@ private fun FullScreenBottomControls(
     bufferedPosition: Long,
     isDraggingProgress: Boolean,
     previewPosition: Long,
-    previewFrameBitmap: Bitmap?,
-    isPreviewFrameLoading: Boolean,
     speed: Float,
     episodes: List<PlayEpisode>,
     currentEpisode: PlayEpisode?,
@@ -1602,8 +1557,6 @@ private fun FullScreenBottomControls(
             bufferedPosition = bufferedPosition,
             showPreview = isDraggingProgress,
             previewPosition = previewPosition,
-            previewFrameBitmap = previewFrameBitmap,
-            isPreviewFrameLoading = isPreviewFrameLoading,
             onValueChange = onSliderValueChange,
             onValueChangeFinished = onSliderValueChangeFinished,
             modifier = Modifier
@@ -1726,14 +1679,12 @@ private fun PlayerProgressBar(
     bufferedPosition: Long,
     showPreview: Boolean,
     previewPosition: Long,
-    previewFrameBitmap: Bitmap?,
-    isPreviewFrameLoading: Boolean,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var barWidthPx by remember {
-        mutableStateOf(1)
+        mutableIntStateOf(1)
     }
 
     val safeDuration = duration.coerceAtLeast(1L)
@@ -1817,34 +1768,6 @@ private fun PlayerProgressBar(
                     RoundedCornerShape(99.dp)
                 )
         )
-
-        /**
-         * 拖动时在小圆点正上方显示预览窗口。
-         *
-         * 窗口只显示目标位置的真实视频画面，不显示进度数字。
-         */
-//        if (showPreview) {
-//            val previewWidth = 144.dp
-//            val maxPreviewX = if (maxWidth > previewWidth) {
-//                maxWidth - previewWidth
-//            } else {
-//                0.dp
-//            }
-//            val previewX = (
-//                    maxWidth * progress - previewWidth / 2
-//                    ).coerceIn(0.dp, maxPreviewX)
-//
-//            ProgressPreviewWindow(
-//                previewFrameBitmap = previewFrameBitmap,
-//                isLoading = isPreviewFrameLoading,
-//                modifier = Modifier
-//                    .offset(
-//                        x = previewX,
-//                        // 预览框底部的小三角紧贴拖动圆点。
-//                        y = (-78).dp
-//                    )
-//            )
-//        }
 
         Box(
             modifier = Modifier
@@ -2038,78 +1961,6 @@ private fun PortraitHiddenProgressBar(
                 .fillMaxWidth(playedFraction)
                 .background(PlayerAccentColor)
         )
-    }
-}
-
-/**
- * 进度条拖动预览窗口。
- *
- * 使用 Media3 FrameExtractor 精确解码目标时间点的画面。
- * 如果某个网络视频源不支持快速随机访问，窗口会暂时显示黑色占位。
- */
-@Composable
-private fun ProgressPreviewWindow(
-    previewFrameBitmap: Bitmap?,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .width(144.dp)
-                .height(81.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.92f),
-                    shape = RoundedCornerShape(7.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape(7.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            previewFrameBitmap?.let { bitmap ->
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "进度预览画面",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            if (isLoading && previewFrameBitmap == null) {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        }
-
-        /**
-         * 小三角指向当前进度圆点。
-         * 预览框不再显示时间数字，只展示目标位置的实际画面。
-         */
-        Canvas(
-            modifier = Modifier
-                .width(14.dp)
-                .height(7.dp)
-        ) {
-            val triangle = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, 0f)
-                lineTo(size.width / 2f, size.height)
-                close()
-            }
-            drawPath(
-                path = triangle,
-                color = Color.Black.copy(alpha = 0.92f)
-            )
-        }
     }
 }
 

@@ -139,11 +139,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.10.1")
     implementation("androidx.media3:media3-ui-compose:1.10.1")
 
-    // 提取视频指定位置的预览画面
-    implementation("androidx.media3:media3-inspector:1.10.1")
-    implementation("androidx.media3:media3-inspector-frame:1.10.1")
-
-    // 让 FrameExtractor 返回的 ListenableFuture 可以使用 await()
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.11.0")
+    // mmkv 键值对
+    implementation(libs.mmkv)
 
 }

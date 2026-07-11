@@ -1,12 +1,10 @@
 package com.balon.blmovie.feature.search.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -27,7 +25,6 @@ import com.balon.blmovie.core.extension.shouldLoadMore
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageMeta
-import com.balon.blmovie.feature.search.SearchResultHeader
 import com.balon.blmovie.feature.search.SearchUiState
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -35,8 +32,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height

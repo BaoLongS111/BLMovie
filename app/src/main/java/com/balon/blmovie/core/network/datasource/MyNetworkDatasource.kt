@@ -11,6 +11,7 @@ import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 import retrofit2.http.QueryMap
 
 /**
@@ -62,5 +63,10 @@ interface MyNetworkDatasource {
     suspend fun searchMovieAdult(
        data:Map<String, String>
     ): NetworkResponse<NetworkPageData<MovieAdult>>
+
+    suspend fun searchMovieSuggest(
+        @Query("keyword") keyword:String,
+        @Query("size") size: String = "20"
+    ): NetworkResponse<List<String>>
 
 }

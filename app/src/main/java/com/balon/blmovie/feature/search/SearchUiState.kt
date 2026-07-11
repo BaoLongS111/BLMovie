@@ -7,6 +7,10 @@ import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageMeta
 
 data class SearchUiState(
+    // 搜索历史
+    val searchHistory: List<String> = emptyList(),
+    // 搜索建议
+    val searchSuggest: List<String> = emptyList(),
 
     var keywords: String,
 
@@ -55,7 +59,7 @@ data class SearchUiState(
     /**
      * 电影Adult上拉加载更多状态
      */
-    val movieAdultLoadMoreState: LoadMoreState = LoadMoreState.Idle,
+    var movieAdultLoadMoreState: LoadMoreState = LoadMoreState.Idle,
 
 
     )

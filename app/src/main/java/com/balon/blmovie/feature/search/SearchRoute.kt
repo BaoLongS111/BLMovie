@@ -34,7 +34,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +50,7 @@ import com.balon.blmovie.core.model.MovieAdult
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.core.model.response.NetworkPageMeta
+import com.balon.blmovie.feature.search.component.MovieAdultPage
 import com.balon.blmovie.feature.search.component.MoviePage
 import com.balon.blmovie.feature.search.component.SearchHistoryContent
 import com.balon.blmovie.feature.search.component.SearchInputBox
@@ -85,7 +85,13 @@ fun SearchRoute(
         onMovieItemClick = onMovieItemClick,
         onMovieAdultItemClick = onMovieAdultItemClick,
         onMovieLoadMore = viewModel::loadMoreMovies,
-        onMovieRetryLoadMore = viewModel::loadMoreMovies
+        onMovieRetryLoadMore = viewModel::loadMoreMovies,
+        onAddSearchHistory = viewModel::addSearchHistory,
+        onClearSearchHistory = viewModel::clearSearchHistory,
+        updateSuggestKeyword = { it ->
+            viewModel.searchMovieSuggest(it)
+        },
+        onMovieAdultLoadMore = viewModel::loadMoreAdultMovies
     )
 }
 
@@ -98,7 +104,11 @@ fun SearchScreen(
     onMovieItemClick: (Movie) -> Unit = {},
     onMovieAdultItemClick: (MovieAdult) -> Unit = {},
     onMovieLoadMore: () -> Unit = {},
-    onMovieRetryLoadMore: () -> Unit = {}
+    onMovieRetryLoadMore: () -> Unit = {},
+    onAddSearchHistory: (String) -> Unit,
+    onClearSearchHistory: () -> Unit,
+    updateSuggestKeyword: (String) -> Unit,
+    onMovieAdultLoadMore:()-> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -132,17 +142,6 @@ fun SearchScreen(
         mutableStateOf(SearchPageState.History)
     }
 
-
-    val historyList = remember {
-        mutableStateListOf(
-            "666",
-            "南京工业职业技术大学",
-            "南京工业大学",
-            "赣南师范大学",
-            "动漫"
-        )
-    }
-
     val hotKeywords = remember {
         listOf(
             "曜无双优化",
@@ -152,24 +151,6 @@ fun SearchScreen(
             "gpt image 2",
             "flutter插件"
         )
-    }
-
-    val suggestList = remember(keyword) {
-        if (keyword.isBlank()) {
-            emptyList()
-        } else {
-            listOf(
-                "${keyword}信谬",
-                "${keyword}什么意思啊",
-                "${keyword}ipx",
-                "${keyword}件可写的事",
-                "${keyword}海航随心飞",
-                "${keyword}抢先资源",
-                "${keyword}路公交车海昏侯",
-                "${keyword}怎么回复",
-                "${keyword}天使数字"
-            )
-        }
     }
 
     fun doSearch() {
@@ -188,10 +169,8 @@ fun SearchScreen(
 
         focusManager.clearFocus(force = true)
 
-        if (historyList.none { it == realKeyword }) {
-            historyList.add(0, realKeyword)
-        }
         uiState.keywords = realKeyword
+        onAddSearchHistory(realKeyword)
         onSearch(realKeyword)
     }
 
@@ -282,6 +261,7 @@ fun SearchScreen(
                              * 不要清空 searchedKeyword。
                              * 否则建议页返回时无法恢复上一次 Result。
                              */
+                            updateSuggestKeyword(value)
                         },
 
                         onFocusChange = { focused ->
@@ -343,14 +323,14 @@ fun SearchScreen(
             when (pageState) {
                 SearchPageState.History -> {
                     SearchHistoryContent(
-                        historyList = historyList,
+                        historyList = uiState.searchHistory,
                         hotKeywords = hotKeywords,
                         onKeywordClick = { value ->
                             keyword = value
                             doSearch()
                         },
                         onClearHistoryClick = {
-                            historyList.clear()
+                            onClearSearchHistory()
                         }
                     )
                 }
@@ -358,7 +338,7 @@ fun SearchScreen(
                 SearchPageState.Suggest -> {
                     SearchSuggestContent(
                         keyword = keyword,
-                        suggestList = suggestList,
+                        suggestList = uiState.searchSuggest,
                         onSuggestClick = { value ->
                             keyword = value
                             doSearch()
@@ -375,7 +355,8 @@ fun SearchScreen(
                         onMovieItemClick = onMovieItemClick,
                         onMovieAdultItemClick = onMovieAdultItemClick,
                         onMovieLoadMore = onMovieLoadMore,
-                        onMovieRetryLoadMore = onMovieRetryLoadMore
+                        onMovieRetryLoadMore = onMovieRetryLoadMore,
+                        onMovieAdultLoadMore = onMovieAdultLoadMore,
                     )
                 }
             }
@@ -395,7 +376,8 @@ private fun SearchResultContent(
     onMovieItemClick: (Movie) -> Unit,
     onMovieAdultItemClick: (MovieAdult) -> Unit,
     onMovieLoadMore: () -> Unit,
-    onMovieRetryLoadMore: () -> Unit
+    onMovieRetryLoadMore: () -> Unit,
+    onMovieAdultLoadMore:()->Unit,
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -433,7 +415,9 @@ private fun SearchResultContent(
                     val pagination = uiState.moviePagination
 
                     if (pagination == null) {
-                        SearchLoadingPage()
+                        SearchEmptyPage(
+                            text = "这里显示视频搜索结果"
+                        )
                     } else {
                         if (uiState.moviePageState == PageState.Success) {
                             MoviePage(
@@ -459,142 +443,24 @@ private fun SearchResultContent(
                     val pagination = uiState.movieAdultPagination
 
                     if (pagination == null) {
-                        SearchLoadingPage()
-                    } else {
-                        MovieAdultPage(
-                            keyword = keyword,
-                            pagination = pagination,
-                            list = movieAdultList,
-                            onMovieAdultItemClick =
-                                onMovieAdultItemClick
+                        SearchEmptyPage(
+                            text = "这里显示演员搜索结果"
                         )
+                    } else {
+                        if (uiState.movieAdultPageState == PageState.Success) {
+                            MovieAdultPage(
+                                uiState = uiState,
+                                keyword = keyword,
+                                pagination = pagination,
+                                list = movieAdultList,
+                                onMovieAdultItemClick = onMovieAdultItemClick,
+                                onLoadMore = onMovieAdultLoadMore
+                            )
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun SearchResultHeader(
-    keyword: String,
-    pagination: NetworkPageMeta
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 16.dp,
-                vertical = 8.dp
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(18.dp)
-        )
-
-        Text(
-            text = "当前搜索：",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-                .copy(alpha = 0.65f),
-            modifier = Modifier.padding(start = 8.dp)
-        )
-
-        Text(
-            text = keyword,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-
-        Box(
-            modifier = Modifier.weight(1f)
-        )
-
-        Text(
-            text = "共找到 ",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-                .copy(alpha = 0.75f)
-        )
-
-        Text(
-            text = pagination.total.toString(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = " 条数据",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-                .copy(alpha = 0.75f)
-        )
-    }
-}
-
-@Composable
-fun MovieAdultPage(
-    keyword: String,
-    pagination: NetworkPageMeta,
-    list: List<MovieAdult>,
-    onMovieAdultItemClick: (MovieAdult) -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        SearchResultHeader(
-            keyword = keyword,
-            pagination = pagination
-        )
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentPadding = PaddingValues(
-                start = 12.dp,
-                end = 12.dp,
-                top = 4.dp,
-                bottom = 72.dp
-            ),
-            horizontalArrangement =
-                Arrangement.spacedBy(10.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = list,
-                key = { movie ->
-                    movie.vodId
-                }
-            ) { movie ->
-                SearchResultMovieAdultItem(
-                    item = movie,
-                    onMovieAdultItemClick =
-                        onMovieAdultItemClick
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SearchLoadingPage() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(28.dp),
-            strokeWidth = 2.dp
-        )
     }
 }
 

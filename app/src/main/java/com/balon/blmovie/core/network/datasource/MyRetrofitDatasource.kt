@@ -85,5 +85,12 @@ class MyRetrofitDatasource @Inject constructor(
         return service.searchMovieAdult(data)
     }
 
+    override suspend fun searchMovieSuggest(
+        keyword: String,
+        size: String
+    ): NetworkResponse<List<String>> {
+        return service.searchMovieSuggest(keyword)
+    }
+
 
 }
