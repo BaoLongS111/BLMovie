@@ -93,26 +93,6 @@ fun SearchResultTabRow(
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
-
-        Box(modifier = Modifier.weight(1f))
-
-        Text(
-            text = "共找到 ",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
-        )
-
-        Text(
-            text = "$totalCount",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = " 条数据",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
-        )
+        
     }
 }

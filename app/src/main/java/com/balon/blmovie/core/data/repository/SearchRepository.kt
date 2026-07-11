@@ -36,4 +36,12 @@ class SearchRepository @Inject constructor(
             )
         }.flowOn(Dispatchers.IO)
 
+    fun searchMovieSuggest(
+        keyword:String
+    ): Flow<NetworkResponse<List<String>>> = flow<NetworkResponse<List<String>>> {
+        emit(
+            networkDatasource.searchMovieSuggest(keyword)
+        )
+    }.flowOn(Dispatchers.IO)
+
 }

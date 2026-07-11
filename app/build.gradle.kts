@@ -139,4 +139,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.10.1")
     implementation("androidx.media3:media3-ui-compose:1.10.1")
 
+    // mmkv 键值对
+    implementation(libs.mmkv)
+
 }

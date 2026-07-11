@@ -1,5 +1,8 @@
 package com.balon.blmovie.feature.moviedetail
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -31,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.balon.blmovie.core.design.component.DelayedLoadingScreen
 import com.balon.blmovie.core.design.component.MyErrorScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
@@ -42,6 +44,7 @@ import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.moviedetail.component.DetailFunctionSection
 import com.balon.blmovie.feature.moviedetail.component.EpisodeSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
+import com.balon.blmovie.feature.moviedetail.component.MovieDetailSkeletonScreen
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
@@ -65,7 +68,9 @@ fun MovieDetailRoute(
 
     when (pageState) {
         is PageState.Loading -> {
-            DelayedLoadingScreen()
+            MovieDetailSkeletonScreen(
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         is PageState.Success -> {
@@ -101,7 +106,6 @@ fun MovieDetailScreen(
     var isLeavingPage by remember {
         mutableStateOf(false)
     }
-
 
     /**
      * 点全屏
@@ -167,6 +171,7 @@ fun MovieDetailScreen(
             MyVideoPlayer(
                 url = currentEpisode?.url.orEmpty(),
                 title = movie.name,
+//                posterUrl = movie.pic,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
                 onEpisodeSelected = { episode ->
@@ -187,6 +192,7 @@ fun MovieDetailScreen(
                 isLeavingPage = isLeavingPage,
 
                 onFullScreenClick = {
+
                     targetFullScreen = !targetFullScreen
                 },
                 onBackClick = {
@@ -214,6 +220,7 @@ fun MovieDetailScreen(
             )
 
             if (!currentFullScreen) {
+
                 DetailContent(
                     movie = movie,
                     episodes = episodes,
@@ -224,6 +231,8 @@ fun MovieDetailScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+
         }
 
     }
@@ -278,7 +287,9 @@ fun DetailContent(
                     )
                 }
 
-                1 -> { CommentPage() }
+                1 -> {
+                    CommentPage()
+                }
             }
         }
 
@@ -387,7 +398,15 @@ private fun DanmakuInputDialog(
 @Preview
 @Composable
 fun MovieDetailScreenPreview() {
-    BLMovieTheme() {
+    BLMovieTheme{
         MovieDetailScreen(MovieDetailUiState())
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
     }
 }

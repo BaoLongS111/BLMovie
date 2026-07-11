@@ -42,6 +42,9 @@ coil = "3.5.0"
 # lottie动画
 lottie = "6.6.9"
 
+# 键值对mmkv
+mmkv = "2.4.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -101,6 +104,9 @@ coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version
 
 # lottie动画
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+
+#  mmkv键值对
+mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

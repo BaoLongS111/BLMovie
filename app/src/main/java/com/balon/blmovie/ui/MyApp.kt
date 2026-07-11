@@ -117,12 +117,6 @@ fun MyApp() {
                         targetContentZIndex = -1f
                     }
             },
-
-            // 手势返回的时候也用同一套
-            predictivePopTransitionSpec = {
-                // 不做预测返回预览动画
-                EnterTransition.None togetherWith ExitTransition.None
-            }
         )
     }
 }

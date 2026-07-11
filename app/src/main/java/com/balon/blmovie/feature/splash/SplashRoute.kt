@@ -34,6 +34,7 @@ import com.balon.blmovie.core.design.theme.AppLogoIcon
 import com.balon.blmovie.core.design.theme.SpaceMediumHeight
 import com.balon.blmovie.util.Constant
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SplashRoute(
@@ -66,7 +67,7 @@ fun SplashScreen(
         startAnimation = true
 
         // 等动画播放一会儿，再跳转
-        delay(3000)
+        delay(1200.milliseconds)
 
         toMain()
     }

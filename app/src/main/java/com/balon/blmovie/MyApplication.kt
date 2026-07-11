@@ -3,6 +3,7 @@ package com.balon.blmovie
 import android.app.Application
 import com.balon.blmovie.core.config.Config
 import com.hjq.toast.Toaster
+import com.tencent.mmkv.MMKV
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -15,6 +16,12 @@ class MyApplication : Application() {
 
         initLog()
         initToast()
+        initMMKV()
+    }
+
+    private fun initMMKV(){
+        // MMKV 必须在使用前初始化
+        MMKV.initialize(this)
     }
 
     private fun initToast(){

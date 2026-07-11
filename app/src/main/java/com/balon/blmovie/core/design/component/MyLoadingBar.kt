@@ -1,5 +1,6 @@
 package com.balon.blmovie.core.design.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -34,8 +35,9 @@ fun MyLoadingBar(
     )
 
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         LottieAnimation(
             composition = composition,
@@ -53,10 +55,10 @@ fun MyLoadingBar(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun MyLoadingBarPreview(){
     BLMovieTheme() {
-        MyLoadingBar()
+        MyLoadingBar(message = "加载中...")
     }
 }

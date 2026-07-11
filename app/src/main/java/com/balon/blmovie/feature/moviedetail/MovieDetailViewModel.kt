@@ -43,7 +43,7 @@ class MovieDetailViewModel @AssistedInject constructor (
             it.copy(
                 pageState = PageState.Loading,
                 refreshState = RefreshState.IDLE,
-                loadMoreState = LoadMoreState.IDLE
+                loadMoreState = LoadMoreState.Idle
             )
         }
 

@@ -10,6 +10,7 @@ import com.balon.blmovie.core.model.response.NetworkPageData
 import com.balon.blmovie.core.model.response.NetworkResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 import retrofit2.http.QueryMap
 
 /**
@@ -91,5 +92,11 @@ interface MyNetworkApiService {
     suspend fun searchMovieAdult(
         @QueryMap data:Map<String, String>
     ): NetworkResponse<NetworkPageData<MovieAdult>>
+
+    @GET("/api/v1/videos/suggest")
+    suspend fun searchMovieSuggest(
+        @Query("keyword") keyword:String,
+        @Query("size") size: String = "20"
+    ): NetworkResponse<List<String>>
 
 }

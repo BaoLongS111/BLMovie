@@ -116,7 +116,7 @@ fun HomeRoute(
     animatedContentScope: AnimatedContentScope? = null,
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Movie) -> Unit,
-    onSearchClick:()->Unit,
+    onSearchClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -273,15 +273,15 @@ fun LoadMoreFooter(
         contentAlignment = Alignment.Center
     ) {
         when (loadMoreState) {
-            LoadMoreState.LOADING -> {
+            is LoadMoreState.Loading -> {
                 CircularProgressIndicator()
             }
 
-            LoadMoreState.ERROR -> {
+            is LoadMoreState.Error -> {
                 Text("加载失败，稍后重试")
             }
 
-            LoadMoreState.NO_MORE -> {
+            is LoadMoreState.NoMore -> {
                 Text("没有更多了")
             }
 

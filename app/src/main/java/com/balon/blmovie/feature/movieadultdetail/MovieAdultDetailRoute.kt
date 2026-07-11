@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balon.blmovie.core.design.component.DelayedLoadingScreen
 import com.balon.blmovie.core.design.component.MyErrorScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
+import com.balon.blmovie.core.design.component.SimpleVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.extension.parsePlayEpisodes
 import com.balon.blmovie.core.model.MovieAdultDetail
@@ -50,6 +52,8 @@ import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
 import com.balon.blmovie.feature.moviedetail.component.PlayerFullScreenEffect
+import com.balon.blmovie.util.openBrowser
+import com.quick.app.core.extension.clickableNoRipple
 import kotlinx.coroutines.launch
 
 @Composable
@@ -158,7 +162,6 @@ fun MovieAdultDetailScreen(
     }
 
 
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -168,9 +171,11 @@ fun MovieAdultDetailScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+
             MyVideoPlayer(
                 url = currentEpisode?.url.orEmpty(),
                 title = movie.vodName,
+//                posterUrl = movie.pic,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
                 onEpisodeSelected = { episode ->
@@ -191,6 +196,7 @@ fun MovieAdultDetailScreen(
                 isLeavingPage = isLeavingPage,
 
                 onFullScreenClick = {
+
                     targetFullScreen = !targetFullScreen
                 },
                 onBackClick = {
@@ -282,7 +288,9 @@ fun AdultDetailContent(
                     )
                 }
 
-                1 -> { CommentPage() }
+                1 -> {
+                    CommentPage()
+                }
             }
         }
 
@@ -307,6 +315,7 @@ fun AdultDetailPage(
     currentEpisode: PlayEpisode?,
     onEpisodeClick: (PlayEpisode) -> Unit,
 ) {
+    val context = LocalContext.current
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             MovieAdultInfoHeader(movie = movie)
@@ -316,6 +325,17 @@ fun AdultDetailPage(
                 episodes = episodes,
                 currentEpisode = currentEpisode,
                 onEpisodeClick = onEpisodeClick
+            )
+        }
+        item {
+            Text(
+                text = episodes[0].url,
+                modifier = Modifier.fillMaxWidth().clickableNoRipple{
+                    openBrowser(context, url = episodes[0].url)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 5,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
