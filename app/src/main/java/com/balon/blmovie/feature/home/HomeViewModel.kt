@@ -49,7 +49,7 @@ class HomeViewModel @Inject constructor(
                     pageState = PageState.Loading,
                     pageMeta = null,
                     refreshState = RefreshState.IDLE,
-                    loadMoreState = LoadMoreState.IDLE
+                    loadMoreState = LoadMoreState.Idle
                 )
             }
 
@@ -133,7 +133,7 @@ class HomeViewModel @Inject constructor(
                     homeData = homeResultData.data,
                     articleList = articleListResultData.data?.list ?: emptyList(),
                     refreshState = RefreshState.IDLE,
-                    loadMoreState = LoadMoreState.IDLE,
+                    loadMoreState = LoadMoreState.Idle,
                 )
             }
 

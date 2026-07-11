@@ -25,7 +25,7 @@ data class MovieDetailUiState(
     /**
      * 上拉加载更多状态
      */
-    val loadMoreState: LoadMoreState = LoadMoreState.IDLE,
+    val loadMoreState: LoadMoreState = LoadMoreState.Idle,
 
     /**
      * 当前分页信息

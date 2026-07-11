@@ -9,6 +9,7 @@ sealed interface PageState {
     data class Error(
         val throwable: Throwable
     ): PageState
+
 }
 
 /**
@@ -31,10 +32,17 @@ enum class RefreshState {
  *  3：上拉加载成功
  *  4：没有更多数据
  */
-enum class LoadMoreState {
-    IDLE,
-    LOADING,
-    ERROR,
-    SUCCESS,
-    NO_MORE
+sealed interface LoadMoreState {
+
+    data object Idle : LoadMoreState
+
+    data object Loading : LoadMoreState
+
+    data class Error(
+        val throwable: Throwable
+    ) : LoadMoreState
+
+    data object Success : LoadMoreState
+
+    data object NoMore : LoadMoreState
 }

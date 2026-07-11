@@ -171,7 +171,7 @@ fun MovieDetailScreen(
             MyVideoPlayer(
                 url = currentEpisode?.url.orEmpty(),
                 title = movie.name,
-                posterUrl = movie.pic,
+//                posterUrl = movie.pic,
                 episodes = episodes,
                 currentEpisode = currentEpisode,
                 onEpisodeSelected = { episode ->

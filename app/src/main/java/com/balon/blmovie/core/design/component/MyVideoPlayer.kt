@@ -102,6 +102,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.painterResource
 import androidx.media3.common.util.UnstableApi
 import com.balon.blmovie.R
@@ -317,9 +318,12 @@ fun MyVideoPlayer(
      * 首帧是否已经真正渲染。
      * 首帧出来前可以继续显示 posterUrl，避免黑屏。
      */
-    var hasRenderedFirstFrame by remember(url) {
+    var hasRenderedFirstFrame by remember {
         mutableStateOf(false)
     }
+    val latestUrl by rememberUpdatedState(
+        newValue = url
+    )
 
     /**
      * 缓冲提示延迟显示。
@@ -452,22 +456,51 @@ fun MyVideoPlayer(
     /**
      * 播放地址真正变化时才切换媒体源。
      */
+    /**
+     * 播放地址真正变化时切换媒体源。
+     */
     LaunchedEffect(url) {
-        if (url.isBlank()) return@LaunchedEffect
+        if (url.isBlank()) {
+            hasRenderedFirstFrame = false
+            return@LaunchedEffect
+        }
 
         val currentUrl = exoPlayer.currentMediaItem
             ?.localConfiguration
             ?.uri
             ?.toString()
 
-        if (currentUrl == url) return@LaunchedEffect
+        // 横竖屏切换或普通重组时，地址没变，不重新加载
+        if (currentUrl == url) {
+            return@LaunchedEffect
+        }
 
+        /**
+         * 新一集尚未输出第一帧。
+         * 此时暂时显示封面。
+         */
+        hasRenderedFirstFrame = false
+
+        // 重置上一集的界面进度
+        currentPosition = 0L
+        bufferedPosition = 0L
+        duration = 0L
+        previewPosition = 0L
+        previewFrameBitmap = null
+        isEnded = false
         isBuffering = true
         controlsVisible = false
-        hasRenderedFirstFrame = false
-        previewFrameBitmap = null
 
-        exoPlayer.setMediaItem(MediaItem.fromUri(url))
+        val mediaItem = MediaItem.Builder()
+            .setUri(url)
+            .setMediaId(url)
+            .build()
+
+        exoPlayer.setMediaItem(
+            mediaItem,
+            true
+        )
+
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
     }
@@ -504,8 +537,23 @@ fun MyVideoPlayer(
                 isPlaying = isPlayingValue
             }
 
+            /**
+             * 当前播放地址真正输出第一帧后，
+             * 隐藏覆盖在播放器上面的封面。
+             */
             override fun onRenderedFirstFrame() {
-                hasRenderedFirstFrame = true
+                val renderedUrl = exoPlayer.currentMediaItem
+                    ?.localConfiguration
+                    ?.uri
+                    ?.toString()
+
+                /**
+                 * 只有当前播放器地址和页面最新地址一致，
+                 * 才认为新一集已经输出首帧。
+                 */
+                if (renderedUrl == latestUrl) {
+                    hasRenderedFirstFrame = true
+                }
             }
         }
 
@@ -963,12 +1011,11 @@ fun MyVideoPlayer(
         )
 
         /**
-         * 首帧出来前显示封面，避免进入详情页时只看到黑屏。
-         * 外层调用时传入 posterUrl 才会显示。
+         * 首帧出来前显示封面。
+         * 新一集首帧输出后淡出。
          */
-        if (
-            !hasRenderedFirstFrame &&
-            !posterUrl.isNullOrBlank()
+        if (!posterUrl.isNullOrBlank() &&
+            !hasRenderedFirstFrame
         ) {
             AsyncImage(
                 model = posterUrl,
@@ -977,6 +1024,7 @@ fun MyVideoPlayer(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
 
         if (showBufferingIndicator) {
             PlayerLoadingOverlay()
