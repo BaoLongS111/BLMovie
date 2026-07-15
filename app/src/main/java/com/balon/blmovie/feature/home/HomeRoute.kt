@@ -1,7 +1,16 @@
 package com.balon.blmovie.feature.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,6 +92,7 @@ import com.balon.blmovie.core.design.theme.SpaceMedium
 import com.balon.blmovie.core.design.theme.SpaceMediumHeight
 import com.balon.blmovie.core.design.theme.SpaceMediumWidth
 import com.balon.blmovie.core.design.theme.SpaceOuter
+import com.balon.blmovie.core.design.theme.SpaceOuterHeight
 import com.balon.blmovie.core.design.theme.SpaceSmall
 import com.balon.blmovie.core.design.theme.SpaceSmallHeight
 import com.balon.blmovie.core.design.theme.SpaceSmallWidth
@@ -179,83 +189,229 @@ fun HomeScreen(
                 onSearchClick = onSearchClick
             )
         },
-        //排除底部导航栏边距
         contentWindowInsets = ScaffoldDefaults
             .contentWindowInsets
             .exclude(WindowInsets.navigationBars)
-//            .exclude(WindowInsets.ime)
     ) { paddingValues ->
-        when (pageState) {
-            is PageState.Loading -> {
-                DelayedLoadingScreen()
-            }
 
-            is PageState.Error -> {
-                MyErrorScreen(
-                    throwable = pageState.throwable,
-                    onRetryClick = onRetry
-                )
-            }
-
-            is PageState.Success -> {
-                MyPullToRefreshBox(
-                    isRefreshing = uiState.refreshState == RefreshState.REFRESHING,
-                    onRefresh = onRefresh,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        // 轮播图
-                        item { Banners(banners = banners) }
-                        item { FunctionSection(FunctionData.entries) }
-                        item {
-                            HomeMovieSection(
-                                title = stringResource(R.string.japanKoreanMovie),
-                                movies = japanKoreanMovies,
-                                columnCount = 3,
-                                onMovieClick = onMovieClick
+        AnimatedContent(
+            targetState = pageState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentKey = { state ->
+                state::class
+            },
+            transitionSpec = {
+                /*
+                 * Success 页面进入时：
+                 * 从下方轻微上移，同时淡入。
+                 */
+                val enterTransition = when (targetState) {
+                    is PageState.Success -> {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 320,
+                                delayMillis = 40,
+                                easing = FastOutSlowInEasing
                             )
-                        }
-                        item { SpaceSmallHeight() }
-                        item {
-                            HomeMovieSection(
-                                title = stringResource(R.string.actionMovie),
-                                movies = actionMovies,
-                                columnCount = 3,
-                                onMovieClick = onMovieClick
-                            )
-                        }
-                        item { SpaceSmallHeight() }
-                        item {
-                            HomeMovieSection(
-                                title = stringResource(R.string.chinaFun),
-                                movies = chinaFun,
-                                columnCount = 3,
-                                onMovieClick = onMovieClick
-                            )
-                        }
-                        item { SpaceSmallHeight() }
-                        item {
-                            HomeMovieSection(
-                                title = stringResource(R.string.chinaMovie),
-                                movies = chinaMovie,
-                                columnCount = 3,
-                                onMovieClick = onMovieClick
-                            )
-                        }
-                        item { SpaceSmallHeight() }
-                        item { ActorSection(actors = actorList) }  // 演员
-                        item { SpaceSmallHeight() }
-                        item { ArticleSection(articles = articleList) }  // 文章
-//                        item { LoadMoreFooter(loadMoreState = uiState.loadMoreState) }
-
+                        ) + slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = 380,
+                                easing = FastOutSlowInEasing
+                            ),
+                            initialOffsetY = { fullHeight ->
+                                fullHeight / 12
+                            }
+                        )
                     }
 
+                    else -> {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = 220
+                            )
+                        )
+                    }
+                }
+
+                /*
+                 * Loading 页面快速淡出。
+                 * Success 离开时轻微向上移动。
+                 */
+                val exitTransition = when (initialState) {
+                    is PageState.Loading -> {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 160
+                            )
+                        )
+                    }
+
+                    is PageState.Success -> {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 150
+                            )
+                        ) + slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = 180,
+                                easing = FastOutSlowInEasing
+                            ),
+                            targetOffsetY = { fullHeight ->
+                                -fullHeight / 30
+                            }
+                        )
+                    }
+
+                    else -> {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = 160
+                            )
+                        )
+                    }
+                }
+
+                enterTransition
+                    .togetherWith(exitTransition)
+                    .using(
+                        SizeTransform(
+                            clip = false
+                        )
+                    )
+            },
+            label = "homePageStateAnimation"
+        ) { currentPageState ->
+
+            when (currentPageState) {
+                is PageState.Loading -> {
+                    DelayedLoadingScreen()
+                }
+
+                is PageState.Error -> {
+                    MyErrorScreen(
+                        throwable = currentPageState.throwable,
+                        onRetryClick = onRetry
+                    )
+                }
+
+                is PageState.Success -> {
+                    MyPullToRefreshBox(
+                        isRefreshing =
+                            uiState.refreshState == RefreshState.REFRESHING,
+                        onRefresh = onRefresh,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = SpaceExtraMedium)
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                )
+                        ) {
+                            item {
+                                Banners(
+                                    banners = banners
+                                )
+                            }
+
+                            item {
+                                SpaceMediumHeight()
+                            }
+
+                            item {
+                                FunctionSection(
+                                    list = FunctionData.entries
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                HomeMovieSection(
+                                    title = stringResource(
+                                        R.string.japanKoreanMovie
+                                    ),
+                                    movies = japanKoreanMovies,
+                                    columnCount = 3,
+                                    onMovieClick = onMovieClick
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                HomeMovieSection(
+                                    title = stringResource(
+                                        R.string.actionMovie
+                                    ),
+                                    movies = actionMovies,
+                                    columnCount = 3,
+                                    onMovieClick = onMovieClick
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                HomeMovieSection(
+                                    title = stringResource(
+                                        R.string.chinaFun
+                                    ),
+                                    movies = chinaFun,
+                                    columnCount = 3,
+                                    onMovieClick = onMovieClick
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                HomeMovieSection(
+                                    title = stringResource(
+                                        R.string.chinaMovie
+                                    ),
+                                    movies = chinaMovie,
+                                    columnCount = 3,
+                                    onMovieClick = onMovieClick
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                ActorSection(
+                                    actors = actorList
+                                )
+                            }
+
+                            item {
+                                SpaceOuterHeight()
+                            }
+
+                            item {
+                                ArticleSection(
+                                    articles = articleList
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
-
     }
 }
 
@@ -335,7 +491,7 @@ fun MyHomeAppBar(
         },
         title = {
             Row(
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -345,6 +501,7 @@ fun MyHomeAppBar(
                     .clickable {
                         onSearchClick()
                     }
+                    .padding(horizontal = 14.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -354,7 +511,7 @@ fun MyHomeAppBar(
                 )
                 SpaceSmallWidth()
                 Text(
-                    text = stringResource(id = R.string.search_tip),
+                    text = stringResource(id = R.string.search_tip_more),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.outline,
                 )

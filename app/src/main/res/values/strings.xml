@@ -35,6 +35,9 @@
     <string name="plot_summary">剧情简介</string>
     <string name="summary">简介</string>
     <string name="comment">评论</string>
-
-
+    <string name="search_tip_more">搜索电影、剧集、明星、资讯</string>
+    <string name="good">点赞</string>
+    <string name="bad">踩</string>
+    <string name="favourite">收藏</string>
+    <string name="share">分享</string>
 </resources>

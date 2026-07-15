@@ -43,9 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.model.MovieAdult
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.response.Movie
@@ -105,10 +107,10 @@ fun SearchScreen(
     onMovieAdultItemClick: (MovieAdult) -> Unit = {},
     onMovieLoadMore: () -> Unit = {},
     onMovieRetryLoadMore: () -> Unit = {},
-    onAddSearchHistory: (String) -> Unit,
-    onClearSearchHistory: () -> Unit,
-    updateSuggestKeyword: (String) -> Unit,
-    onMovieAdultLoadMore:()-> Unit
+    onAddSearchHistory: (String) -> Unit = {},
+    onClearSearchHistory: () -> Unit = {},
+    updateSuggestKeyword: (String) -> Unit = {},
+    onMovieAdultLoadMore: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -229,13 +231,13 @@ fun SearchScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 navigationIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowBackIosNew,
                         contentDescription = "返回",
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .padding(start = 12.dp)
                             .size(22.dp)
@@ -266,6 +268,7 @@ fun SearchScreen(
 
                         onFocusChange = { focused ->
                             if (focused) {
+                                updateSuggestKeyword(keyword)
                                 when (pageState) {
                                     SearchPageState.Result -> {
                                         suggestBackTarget = SearchPageState.Result
@@ -303,7 +306,7 @@ fun SearchScreen(
                         Text(
                             text = "搜索",
                             style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -317,7 +320,7 @@ fun SearchScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(paddingValues)
         ) {
             when (pageState) {
@@ -331,7 +334,8 @@ fun SearchScreen(
                         },
                         onClearHistoryClick = {
                             onClearSearchHistory()
-                        }
+                        },
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
 
@@ -342,7 +346,8 @@ fun SearchScreen(
                         onSuggestClick = { value ->
                             keyword = value
                             doSearch()
-                        }
+                        },
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
 
@@ -377,7 +382,7 @@ private fun SearchResultContent(
     onMovieAdultItemClick: (MovieAdult) -> Unit,
     onMovieLoadMore: () -> Unit,
     onMovieRetryLoadMore: () -> Unit,
-    onMovieAdultLoadMore:()->Unit,
+    onMovieAdultLoadMore: () -> Unit,
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -425,6 +430,7 @@ private fun SearchResultContent(
                                 keyword = keyword,
                                 pagination = pagination,
                                 list = movieList,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                                 onMovieItemClick = onMovieItemClick,
                                 onLoadMore = onMovieLoadMore,
                                 onRetryLoadMore = onMovieRetryLoadMore
@@ -452,6 +458,7 @@ private fun SearchResultContent(
                                 uiState = uiState,
                                 keyword = keyword,
                                 pagination = pagination,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                                 list = movieAdultList,
                                 onMovieAdultItemClick = onMovieAdultItemClick,
                                 onLoadMore = onMovieAdultLoadMore
@@ -479,3 +486,19 @@ private fun SearchEmptyPage(
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun SearchPreview() {
+    BLMovieTheme {
+        SearchScreen(
+            uiState = SearchUiState(
+                keywords = "",
+                searchHistory = listOf("你好", "你好", "你好",
+                    "你好", "你好", "你好", "你好")
+            )
+
+        )
+    }
+}
+

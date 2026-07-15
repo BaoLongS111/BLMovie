@@ -36,4 +36,9 @@
     <string name="plot_summary">Plot Summary</string>
     <string name="summary">Summary</string>
     <string name="comment">Comment</string>
+    <string name="search_tip_more">Search Movie、TV、Actor、Article</string>
+    <string name="good">Good</string>
+    <string name="bad">Bad</string>
+    <string name="favourite">Favourite</string>
+    <string name="share">Share</string>
 </resources>
