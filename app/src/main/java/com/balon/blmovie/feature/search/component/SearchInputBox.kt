@@ -60,7 +60,7 @@ fun SearchInputBox(
             .fillMaxWidth()
             .height(38.dp)
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.background,
                 shape = CircleShape
             )
             .onFocusChanged { focusState ->

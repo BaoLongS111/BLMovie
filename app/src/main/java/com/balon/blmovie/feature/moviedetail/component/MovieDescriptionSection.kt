@@ -56,7 +56,6 @@ fun MovieDescriptionSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
             .animateContentSize(
                 animationSpec = tween(
                     durationMillis = 260,

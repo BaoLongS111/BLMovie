@@ -61,7 +61,6 @@ fun Banners(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = SpaceSmall)
             .aspectRatio(16f / 9f)
             .clip(MaterialTheme.shapes.medium)
             .pointerInput(Unit) {

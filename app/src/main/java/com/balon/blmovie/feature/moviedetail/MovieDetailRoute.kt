@@ -5,6 +5,14 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,11 +25,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,13 +48,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balon.blmovie.core.design.component.MyErrorScreen
 import com.balon.blmovie.core.design.component.MyVideoPlayer
 import com.balon.blmovie.core.design.theme.BLMovieTheme
+import com.balon.blmovie.core.design.theme.SpaceOuterHeight
 import com.balon.blmovie.core.extension.parsePlayEpisodes
 import com.balon.blmovie.core.model.PageState
 import com.balon.blmovie.core.model.PlayEpisode
 import com.balon.blmovie.core.model.response.Movie
 import com.balon.blmovie.feature.moviedetail.component.DetailFunctionSection
+import com.balon.blmovie.feature.moviedetail.component.EpisodeBottomSheet
 import com.balon.blmovie.feature.moviedetail.component.EpisodeSection
 import com.balon.blmovie.feature.moviedetail.component.MovieDescriptionSection
+import com.balon.blmovie.feature.moviedetail.component.MovieDetailShimmer
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailSkeletonScreen
 import com.balon.blmovie.feature.moviedetail.component.MovieDetailTabRow
 import com.balon.blmovie.feature.moviedetail.component.MovieInfoHeader
@@ -54,6 +68,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MovieDetailRoute(
     navKey: MovieDetailRoutes.MovieDetail,
+    animatedContentScope: AnimatedContentScope? = null,
     onBack: () -> Unit,
     onHomeClick: () -> Unit,
 ) {
@@ -66,26 +81,110 @@ fun MovieDetailRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pageState = uiState.pageState
 
-    when (pageState) {
-        is PageState.Loading -> {
-            MovieDetailSkeletonScreen(
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+    /*
+    * 当前路由是否还在执行进入或退出动画。
+    */
+    val isRouteAnimating =
+        animatedContentScope?.transition?.isRunning == true
 
-        is PageState.Success -> {
-            MovieDetailScreen(
-                uiState = uiState,
-                onBackClick = onBack,
-                onHomeClick = onHomeClick
-            )
-        }
+    /*
+     * 实际显示在界面上的状态。
+     *
+     * 初始固定显示骨架屏，防止数据加载太快，
+     * 导致进入页面的途中直接显示 Success。
+     */
+    var displayPageState by remember {
+        mutableStateOf<PageState>(PageState.Loading)
+    }
 
-        is PageState.Error -> {
-            MyErrorScreen(
-                throwable = pageState.throwable,
-                onRetryClick = viewModel::onRetry
-            )
+    /*
+ * 真实数据状态发生变化，或者路由动画状态发生变化时执行。
+ */
+    LaunchedEffect(
+        pageState,
+        isRouteAnimating
+    ) {
+        when {
+            /*
+             * 进入 Loading 时立即显示骨架屏。
+             * 主要用于首次加载和错误重试。
+             */
+            pageState is PageState.Loading -> {
+                displayPageState = PageState.Loading
+            }
+
+            /*
+             * Success 或 Error 只有在路由动画结束后才显示。
+             */
+            !isRouteAnimating -> {
+                displayPageState = pageState
+            }
+
+            /*
+             * 路由动画还在执行时不处理，
+             * 继续保持当前的骨架屏。
+             */
+            else -> Unit
+        }
+    }
+
+
+    AnimatedContent(
+        targetState = displayPageState,
+        modifier = Modifier.fillMaxSize(),
+        contentKey = { it::class },
+        transitionSpec = {
+            if (targetState is PageState.Error) {
+                (
+                        fadeIn(
+                            tween(
+                                durationMillis = 280,
+                                delayMillis = 40,
+                                easing = FastOutSlowInEasing
+                            )
+                        ) + slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = 320,
+                                easing = FastOutSlowInEasing
+                            ),
+                            initialOffsetY = { it / 18 }
+                        )
+                        ).togetherWith(
+                        fadeOut(
+                            tween(durationMillis = 150)
+                        )
+                    )
+            } else {
+                fadeIn(
+                    tween(durationMillis = 180)
+                ).togetherWith(
+                    fadeOut(
+                        tween(durationMillis = 120)
+                    )
+                )
+            }
+        },
+        label = "movieDetailPageState"
+    ) { currentPageState ->
+        when (currentPageState) {
+            is PageState.Loading -> {
+                MovieDetailShimmer()
+            }
+
+            is PageState.Success -> {
+                MovieDetailScreen(
+                    uiState = uiState,
+                    onBackClick = onBack,
+                    onHomeClick = onHomeClick
+                )
+            }
+
+            is PageState.Error -> {
+                MyErrorScreen(
+                    throwable = currentPageState.throwable,
+                    onRetryClick = viewModel::onRetry
+                )
+            }
         }
     }
 
@@ -98,7 +197,6 @@ fun MovieDetailScreen(
     onHomeClick: () -> Unit = {}
 ) {
     val movie = uiState.movieDetail ?: return
-
     val episodes: List<PlayEpisode> = remember(movie.playUrl) {
         movie.playUrl.parsePlayEpisodes()
     }
@@ -307,6 +405,7 @@ fun DetailContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailPage(
     movie: Movie,
@@ -314,23 +413,93 @@ fun DetailPage(
     currentEpisode: PlayEpisode?,
     onEpisodeClick: (PlayEpisode) -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            MovieInfoHeader(movie = movie)
-        }
-        item { DetailFunctionSection() }
+    var showEpisodeSheet by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-        item {
-            EpisodeSection(
+    val sheetState = rememberModalBottomSheetState(
+        // 打开后直接完全展开，不停留在半展开状态
+        skipPartiallyExpanded = true
+    )
+
+    val coroutineScope = rememberCoroutineScope()
+
+    val dismissEpisodeSheet: () -> Unit = {
+        coroutineScope
+            .launch {
+                sheetState.hide()
+            }
+            .invokeOnCompletion {
+                if (!sheetState.isVisible) {
+                    showEpisodeSheet = false
+                }
+            }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 8.dp
+                )
+        ) {
+            item {
+                MovieInfoHeader(movie = movie)
+            }
+
+            item {
+                SpaceOuterHeight()
+            }
+
+            item {
+                DetailFunctionSection()
+            }
+
+            item {
+                SpaceOuterHeight()
+            }
+
+            item {
+                EpisodeSection(
+                    episodes = episodes,
+                    currentEpisode = currentEpisode,
+                    onMoreClick = {
+                        showEpisodeSheet = true
+                    },
+                    onEpisodeClick = onEpisodeClick
+                )
+            }
+
+            item {
+                SpaceOuterHeight()
+            }
+
+            item {
+                MovieDescriptionSection(
+                    description = movie.description.orEmpty()
+                )
+            }
+        }
+
+        if (showEpisodeSheet) {
+            EpisodeBottomSheet(
                 episodes = episodes,
                 currentEpisode = currentEpisode,
-                onEpisodeClick = onEpisodeClick
-            )
-        }
+                sheetState = sheetState,
+                onDismissRequest = {
+                    showEpisodeSheet = false
+                },
+                onCloseClick = dismissEpisodeSheet,
+                onEpisodeClick = { episode ->
+                    onEpisodeClick(episode)
 
-        item {
-            MovieDescriptionSection(
-                description = movie.description.orEmpty()
+                    // 选择完成后关闭底部面板
+                    dismissEpisodeSheet()
+                }
             )
         }
     }
@@ -398,15 +567,7 @@ private fun DanmakuInputDialog(
 @Preview
 @Composable
 fun MovieDetailScreenPreview() {
-    BLMovieTheme{
+    BLMovieTheme {
         MovieDetailScreen(MovieDetailUiState())
-    }
-}
-
-private tailrec fun Context.findActivity(): Activity? {
-    return when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 fun SearchResultTabRow(
     pagerState: PagerState,
     totalCount: Int,
+    modifier: Modifier = Modifier,
     onTabClick: (Int) -> Unit
 ) {
     val tabs = listOf("视频", "文章", "演员")
@@ -43,11 +44,10 @@ fun SearchResultTabRow(
     val indicatorOffset = firstIndicatorStart + tabWidth * pageProgress
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(

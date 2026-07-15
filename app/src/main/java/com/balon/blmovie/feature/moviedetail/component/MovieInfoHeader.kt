@@ -50,7 +50,6 @@ fun MovieInfoHeader(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
             .animateContentSize(
                 animationSpec = tween(
                     durationMillis = 260,
@@ -61,12 +60,11 @@ fun MovieInfoHeader(
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(end = SpaceSmall)
         ) {
             Text(
                 text = movie.name ?: "未命名",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -93,12 +91,17 @@ fun MovieInfoHeader(
                 modifier = Modifier.padding(top = 6.dp)
             )
 
-            InfoRow(text = "地区:${movie.area ?: "地球"}")
-            InfoRow(text = "导演:${movie.director ?: "导演"}")
-            InfoRow(text = "演员:${movie.actor ?: "演员"}")
+            if (movie.area!!.isNotBlank()) {
+                InfoRow(text = "地区:${movie.area ?: "地球"}")
+            }
+            if (movie.director!!.isNotBlank()) {
+                InfoRow(text = "导演:${movie.director ?: "导演"}")
+            }
+            if (movie.actor!!.isNotBlank()) {
+                InfoRow(text = "演员:${movie.actor ?: "演员"}")
+            }
 
         }
-
 
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.balon.blmovie.core.design.component.MyLoadingBar
+import com.balon.blmovie.core.design.theme.SpaceOuterHeight
 import com.balon.blmovie.core.extension.shouldLoadMore
 import com.balon.blmovie.core.model.LoadMoreState
 import com.balon.blmovie.core.model.MovieAdult
@@ -46,6 +47,7 @@ fun MovieAdultPage(
     keyword: String,
     pagination: NetworkPageMeta,
     list: List<MovieAdult>,
+    modifier: Modifier = Modifier,
     onMovieAdultItemClick: (MovieAdult) -> Unit,
     onLoadMore: () -> Unit,
 ) {
@@ -113,13 +115,13 @@ fun MovieAdultPage(
 
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         SearchResultHeader(
             keyword = keyword,
             pagination = pagination
         )
-
+        SpaceOuterHeight()
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = gridState,
@@ -127,9 +129,6 @@ fun MovieAdultPage(
                 .fillMaxWidth()
                 .weight(1f),
             contentPadding = PaddingValues(
-                start = 12.dp,
-                top = 4.dp,
-                end = 12.dp,
                 // 系统底部手势区域 + 额外安全距离
                 bottom = navigationBarPadding + 12.dp
             ),

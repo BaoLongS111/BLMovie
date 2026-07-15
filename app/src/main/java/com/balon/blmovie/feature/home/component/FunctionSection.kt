@@ -1,5 +1,6 @@
 package com.balon.blmovie.feature.home.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +23,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.balon.blmovie.core.design.theme.SpaceExtraMedium
 import com.balon.blmovie.core.design.theme.SpaceExtraSmall2
 import com.balon.blmovie.core.design.theme.SpaceMedium
@@ -30,38 +34,65 @@ import com.balon.blmovie.core.design.theme.SpaceSmallHeight
 
 @Composable
 fun FunctionSection(
-    list:List<FunctionData>,
+    list: List<FunctionData>,
     modifier: Modifier = Modifier,
-    columnCount:Int = 5,
+    columnCount: Int = 5,
     onFunctionClick: (FunctionData) -> Unit = {}
-){
-    Column(
+) {
+    val sectionShape = RoundedCornerShape(16.dp)
+
+    Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = SpaceExtraSmall2, vertical = SpaceMedium),
-        verticalArrangement = Arrangement.spacedBy(SpaceOuter)
+            .fillMaxWidth(),
+        shape = sectionShape,
+
+        color = MaterialTheme.colorScheme.surfaceVariant,
+
+        // 轻微的主题层级效果，深色模式也能正常显示
+        tonalElevation = 1.dp,
+
+        // 实际阴影，不建议太大
+        shadowElevation = 3.dp,
+
+        // 淡淡的描边
+        border = BorderStroke(
+            width = 0.8.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                alpha = 0.65f
+            )
+        )
     ) {
-        list.chunked(columnCount).forEach { rowFunctions ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SpaceMedium)
-            ) {
-                rowFunctions.forEach { function ->
-                    FunctionUnit(
-                        data = function,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            onFunctionClick(function)
-                        }
-                    )
-                }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 14.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(SpaceOuter)
+        ) {
+            list.chunked(columnCount).forEach { rowFunctions ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SpaceMedium)
+                ) {
+                    rowFunctions.forEach { function ->
+                        FunctionUnit(
+                            data = function,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                onFunctionClick(function)
+                            }
+                        )
+                    }
 
-                val emptyCount = columnCount - rowFunctions.size
+                    val emptyCount = columnCount - rowFunctions.size
 
-                repeat(emptyCount) {
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
+                    repeat(emptyCount) {
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -85,15 +116,17 @@ fun FunctionUnit(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(SpaceExtraMedium))
-                .background(MaterialTheme.colorScheme.primary),
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    MaterialTheme.colorScheme.primary
+                ),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(data.icon),
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(21.dp)
             )
         }
         SpaceSmallHeight()
@@ -104,5 +137,13 @@ fun FunctionUnit(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FunctionSectionPreview(){
+    BLMovieTheme() {
+        FunctionSection(FunctionData.entries)
     }
 }

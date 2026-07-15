@@ -61,7 +61,6 @@ fun HomeMovieSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(SpaceSmall)
     ) {
         SectionHeader(title = title)
         SpaceMediumHeight()

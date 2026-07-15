@@ -27,14 +27,11 @@ import androidx.compose.ui.unit.dp
 fun SearchSuggestContent(
     keyword: String,
     suggestList: List<String>,
+    modifier: Modifier = Modifier,
     onSuggestClick: (String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            horizontal = 16.dp,
-            vertical = 6.dp
-        )
+        modifier = modifier.fillMaxSize(),
     ) {
         if (keyword.isBlank()) {
             item {

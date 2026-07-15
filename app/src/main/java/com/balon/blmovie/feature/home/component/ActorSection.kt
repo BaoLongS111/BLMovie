@@ -45,7 +45,6 @@ fun ActorSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(SpaceSmall)
     ) {
         SectionHeader(title = "热映星榜", modifier = modifier, onMoreClick = onMoreClick)
         SpaceMediumHeight()

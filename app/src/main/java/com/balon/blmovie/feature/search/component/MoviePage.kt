@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import com.balon.blmovie.core.design.component.MyLoadingBar
+import com.balon.blmovie.core.design.theme.SpaceOuterHeight
 import com.quick.app.core.extension.clickableNoRipple
 
 private const val MOVIE_GRID_PREFETCH_ITEM_COUNT = 6
@@ -53,6 +54,7 @@ fun MoviePage(
     keyword: String,
     pagination: NetworkPageMeta,
     list: List<Movie>,
+    modifier: Modifier = Modifier,
     onMovieItemClick: (Movie) -> Unit,
     onLoadMore: () -> Unit,
     onRetryLoadMore: () -> Unit
@@ -121,13 +123,13 @@ fun MoviePage(
         .calculateBottomPadding()
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         SearchResultHeader(
             keyword = keyword,
             pagination = pagination
         )
-
+        SpaceOuterHeight()
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             state = gridState,
@@ -135,9 +137,6 @@ fun MoviePage(
                 .fillMaxWidth()
                 .weight(1f),
             contentPadding = PaddingValues(
-                start = 12.dp,
-                top = 4.dp,
-                end = 12.dp,
                 // 系统底部手势区域 + 额外安全距离
                 bottom = navigationBarPadding + 12.dp
             ),

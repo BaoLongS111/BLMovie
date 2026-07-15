@@ -1541,7 +1541,7 @@ private fun FullScreenBottomControls(
             .padding(
                 start = FullScreenHorizontalPadding,
                 end = FullScreenHorizontalPadding,
-                bottom = FullScreenBottomPadding
+                bottom = FullScreenBottomPadding + 8.dp
             )
     ) {
         Text(

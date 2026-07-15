@@ -38,8 +38,10 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
+import com.balon.blmovie.core.design.theme.BLMovieTheme
 import com.quick.app.core.extension.clickableNoRipple
 import kotlin.math.max
 
@@ -59,23 +61,18 @@ private val HistoryActionIconSize = 20.dp
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SearchHistoryContent(
-    historyList: List<String>,
-    hotKeywords: List<String>,
-    onKeywordClick: (String) -> Unit,
-    onClearHistoryClick: () -> Unit
+    historyList: List<String> = emptyList(),
+    hotKeywords: List<String> = emptyList(),
+    modifier: Modifier = Modifier,
+    onKeywordClick: (String) -> Unit = {},
+    onClearHistoryClick: () -> Unit = {}
 ) {
     var historyExpanded by rememberSaveable {
         mutableStateOf(false)
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 20.dp,
-            top = 8.dp,
-            end = 20.dp,
-            bottom = 12.dp
-        )
+        modifier = modifier.fillMaxSize(),
     ) {
         item(
             key = "history_title"
@@ -133,11 +130,7 @@ fun SearchHistoryContent(
             SectionTitleRow(
                 title = "猜你喜欢",
                 modifier = Modifier.padding(
-                    top = if (historyList.isEmpty()) {
-                        18.dp
-                    } else {
-                        30.dp
-                    }
+                    top = 12.dp
                 )
             )
         }
@@ -465,21 +458,17 @@ private fun SearchHistoryChip(
         modifier = Modifier.widthIn(
             max = 210.dp
         ),
-        shape = RoundedCornerShape(30),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
+        shape = RoundedCornerShape(45),
+        color = MaterialTheme.colorScheme.background,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(
-                horizontal = 8.dp,
+                horizontal = 12.dp,
                 vertical = 8.dp
             )
         )
@@ -508,5 +497,18 @@ private fun SectionTitleRow(
         )
 
         action?.invoke()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchHistoryContentPreview() {
+    BLMovieTheme {
+        SearchHistoryContent(
+            listOf(
+                "你好", "你好", "你好",
+                "你好", "你好", "你好", "你好"
+            )
+        )
     }
 }

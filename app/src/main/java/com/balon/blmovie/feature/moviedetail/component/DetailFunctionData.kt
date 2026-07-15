@@ -10,21 +10,21 @@ enum class DetailFunctionData(
     Like(
         icon = R.drawable.like,
         selectedIcon = R.drawable.like_selected,
-        text = 0
+        text = R.string.good
     ),
     Dislike(
         icon = R.drawable.dislike,
         selectedIcon = R.drawable.dislike_selected,
-        text = 0
+        text = R.string.bad
     ),
     Fav(
         icon = R.drawable.fav,
         selectedIcon = R.drawable.fav_selected,
-        text = 0
+        text = R.string.favourite
     ),
     Share(
         icon = R.drawable.share,
         selectedIcon = R.drawable.share_selected,
-        text = 0
+        text = R.string.share
     )
 }

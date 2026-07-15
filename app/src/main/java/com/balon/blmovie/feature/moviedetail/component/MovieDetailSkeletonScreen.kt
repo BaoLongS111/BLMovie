@@ -52,7 +52,6 @@ fun MovieDetailSkeletonScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-
                 .background(Color.Black)
         )
 
